@@ -11,6 +11,9 @@ let gridState = new Array(9).fill('❓');
 
 // ELEMENTOS DOM
 const dom = {
+    appBody: document.getElementById('app-body'),
+    machineWrapper: document.getElementById('machine-wrapper'),
+    mascotHeaderArea: document.getElementById('mascot-header-area'),
     grid: document.getElementById('slot-grid'),
     balance: document.getElementById('ui-saldo'),
     multiplier: document.getElementById('ui-multiplier'),
@@ -30,6 +33,7 @@ const dom = {
     sectorPill: document.getElementById('sector-incentive-pill'),
     sectorDesc: document.getElementById('sector-incentive-desc'),
     mascotCard: document.getElementById('mascot-card'),
+    mascotQuickBar: document.getElementById('mascot-quick-bar'),
     username: document.getElementById('ui-username'),
     logoutBtn: document.getElementById('logout-btn'),
     loginModal: document.getElementById('login-modal'),
@@ -82,28 +86,106 @@ dom.logoutBtn.addEventListener('click', () => {
     dom.loginModal.classList.remove('hidden');
 });
 
+// APLICA O TEMA VISUAL EXCLUSIVO DA ATLÉTICA
+function applySectorTheme(sector) {
+    const t = sector.theme;
+    if (!t) return;
+
+    // Fundo da página sutil com gradiente temático
+    dom.appBody.style.background = `radial-gradient(circle at 50% 10%, ${t.primary}18 0%, #030712 70%)`;
+
+    // Moldura da Máquina de Slot
+    dom.machineWrapper.className = `w-full max-w-lg machine-container rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col gap-4 relative border-2 ${t.machineBorder} ${t.machineGlow}`;
+
+    // Cabeçalho do Mascote
+    dom.mascotHeaderArea.className = `mascot-area rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center relative shadow-xl overflow-hidden border-2 ${t.headerBorder} ${t.headerBg} ${t.headerGlow}`;
+
+    // Badges superiores
+    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md ${t.badgeBg}`;
+    dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-1 rounded-lg shadow-md border ${t.pillBg}`;
+    dom.mascotName.className = `text-xl sm:text-2xl font-black uppercase tracking-tight text-center relative z-10 mt-1 drop-shadow-md ${t.titleColor}`;
+
+    // Botão de Girar Principal
+    dom.spinBtn.className = `w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg ${t.spinBtnClass}`;
+
+    // Imagem Hero Grande em Destaque no Topo
+    if (sector.image) {
+        dom.mascotImg.innerHTML = `
+            <div class="relative group cursor-pointer">
+                <img src="${sector.image}" alt="${sector.mascotName}" 
+                    class="mascot-hero-img h-28 w-28 sm:h-32 sm:w-32 object-contain rounded-full border-4 bg-slate-950/80 p-1.5 ${t.avatarGlow}">
+                <div class="absolute -bottom-1 -right-1 bg-slate-900 border border-slate-700 text-xs px-1.5 py-0.5 rounded-full shadow">
+                    ${sector.icon}
+                </div>
+            </div>
+        `;
+    } else {
+        dom.mascotImg.innerHTML = `<span class="text-7xl sm:text-8xl drop-shadow-2xl">${sector.icon}</span>`;
+    }
+}
+
+// BARRA SELETORA RÁPIDA NO TOPO
+function renderMascotQuickBar() {
+    dom.mascotQuickBar.innerHTML = '';
+    Object.values(MASCOTS_CATALOG).forEach(sec => {
+        const isActive = sec.id === currentSector.id;
+        const btn = document.createElement('button');
+        btn.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+            isActive 
+                ? 'bg-slate-800 text-white border-yellow-400 shadow-[0_0_12px_rgba(234,179,8,0.5)] scale-105' 
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+        }`;
+        
+        const thumb = sec.image 
+            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover">` 
+            : `<span>${sec.icon}</span>`;
+
+        btn.innerHTML = `${thumb} <span>${sec.mascotName.split(' ')[0]}</span>`;
+        btn.addEventListener('click', () => switchSector(sec.id));
+        dom.mascotQuickBar.appendChild(btn);
+    });
+}
+
+// ALTERNA SETOR DINAMICAMENTE
+function switchSector(sectorId) {
+    if (isSpinning) return;
+    currentSector = MASCOTS_CATALOG[sectorId] || currentSector;
+    
+    // Atualiza URL sem recarregar a página
+    const newUrl = `${window.location.pathname}?setor=${currentSector.id}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+
+    // Atualiza textos
+    dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
+    dom.sectorPill.innerText = `+${Math.round((currentSector.baseBonus - 1) * 100)}% Bônus`;
+    dom.sectorDesc.innerText = currentSector.incentiveText;
+    dom.mascotName.innerText = currentSector.mascotName;
+    
+    // Aplica tema
+    applySectorTheme(currentSector);
+    renderMascotQuickBar();
+
+    // Multiplicador base inicial do setor
+    multiplier = currentSector.baseBonus;
+    updateUI();
+    initGrid();
+    showMessage(`Atlética ativa: ${currentSector.athleticName}!`, 'bg-slate-800', currentSector.theme.titleColor);
+}
+
 // RESOLUÇÃO DE SETOR / MASCOTE VIA URL
 function initSector() {
     const urlParams = new URLSearchParams(window.location.search);
     const param = urlParams.get('setor') || urlParams.get('mascote');
     currentSector = getSectorConfig(param);
 
-    // Atualiza elementos visuais do setor
     dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
     dom.sectorPill.innerText = `+${Math.round((currentSector.baseBonus - 1) * 100)}% Bônus`;
     dom.sectorDesc.innerText = currentSector.incentiveText;
-    
-    if (currentSector.image) {
-        dom.mascotImg.innerHTML = `<img src="${currentSector.image}" alt="${currentSector.mascotName}" class="h-20 sm:h-24 w-20 sm:w-24 object-cover rounded-full border-2 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)] bg-black/60">`;
-        dom.mascotImg.className = "mt-4 mb-1 relative z-10 transition-transform flex items-center justify-center";
-    } else {
-        dom.mascotImg.innerText = currentSector.icon;
-        dom.mascotImg.className = "text-6xl sm:text-7xl mt-5 mb-1 drop-shadow-2xl relative z-10 transition-transform";
-    }
-
     dom.mascotName.innerText = currentSector.mascotName;
     
-    // Multiplicador base inicial do setor
+    applySectorTheme(currentSector);
+    renderMascotQuickBar();
+
     multiplier = currentSector.baseBonus;
     updateUI();
 }
@@ -125,11 +207,11 @@ function updateBetUI() {
     dom.betBtns.forEach(btn => {
         const betVal = parseInt(btn.dataset.bet);
         if (betVal === currentBet) {
-            btn.classList.add('bg-green-400', 'text-slate-900', 'border-green-600', 'shadow-inner');
-            btn.classList.remove('bg-slate-700', 'text-white', 'border-slate-900');
+            btn.classList.add('bg-yellow-400', 'text-slate-950', 'border-yellow-600', 'shadow-inner');
+            btn.classList.remove('bg-slate-800', 'text-white', 'border-slate-950');
         } else {
-            btn.classList.remove('bg-green-400', 'text-slate-900', 'border-green-600', 'shadow-inner');
-            btn.classList.add('bg-slate-700', 'text-white', 'border-slate-900');
+            btn.classList.remove('bg-yellow-400', 'text-slate-950', 'border-yellow-600', 'shadow-inner');
+            btn.classList.add('bg-slate-800', 'text-white', 'border-slate-950');
         }
     });
 }
@@ -145,7 +227,7 @@ dom.betBtns.forEach(btn => {
 
 // ATUALIZA UI GERAL E PERSISTÊNCIA
 function updateUI() {
-    dom.balance.innerText = balance;
+    dom.balance.innerText = balance.toLocaleString();
     dom.multiplier.innerText = `${multiplier.toFixed(1)}x`;
 
     if (currentUser) {
@@ -157,11 +239,11 @@ function updateUI() {
     }
     
     if (multiplier > 1) {
-        dom.multiBox.classList.add('border-yellow-500', 'bg-yellow-900/40');
+        dom.multiBox.classList.add('border-yellow-500', 'bg-yellow-950/40');
         dom.multiLabel.classList.replace('text-slate-400', 'text-yellow-400');
         dom.multiplier.classList.replace('text-slate-300', 'text-yellow-400');
     } else {
-        dom.multiBox.classList.remove('border-yellow-500', 'bg-yellow-900/40');
+        dom.multiBox.classList.remove('border-yellow-500', 'bg-yellow-950/40');
         dom.multiLabel.classList.replace('text-yellow-400', 'text-slate-400');
         dom.multiplier.classList.replace('text-yellow-400', 'text-slate-300');
     }
@@ -229,7 +311,7 @@ async function animateSpin(hasBuff = false) {
 
                 if (hasBuff) {
                     const randomLine = Math.floor(Math.random() * 3);
-                    const winningSymbol = symbols[0]; // Símbolo principal do mascote
+                    const winningSymbol = symbols[0];
                     const startIdx = randomLine * 3;
                     gridState[startIdx] = winningSymbol;
                     gridState[startIdx + 1] = winningSymbol;
@@ -286,7 +368,7 @@ async function playNormalSpin() {
     activeMascotMultiplier = 1;
     updateUI();
     
-    const isMascotBuff = Math.random() < 0.18; // Chance de interação do mascote
+    const isMascotBuff = Math.random() < 0.20;
     
     if (isMascotBuff) {
         await triggerMascotBuff();
@@ -301,7 +383,6 @@ async function playNormalSpin() {
         highlightWins(winningLines);
         const linesCount = winningLines.length;
         
-        // Multiplicador total: base do setor * buff da carta se houver
         const sectorMult = currentSector.baseBonus || 1;
         const cardMult = activeMascotMultiplier > 1 ? activeMascotMultiplier : 1;
         const finalSpinMultiplier = sectorMult * cardMult;
@@ -310,7 +391,6 @@ async function playNormalSpin() {
         balance += prize;
         updateUI();
 
-        // Submete pontuação recorde ao ranking global
         RankingService.submitScore(currentUser.nickname, balance, currentSector.sectorName, currentSector.icon);
         
         let initialMulti = Math.round(finalSpinMultiplier);
@@ -353,8 +433,7 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
     
     dom.bonusAlert.classList.remove('hidden');
     dom.spinBtn.innerText = "RODANDO AUTO...";
-    dom.spinBtn.classList.replace('from-green-500', 'from-purple-600');
-    dom.spinBtn.classList.replace('to-emerald-700', 'to-indigo-700');
+    dom.spinBtn.className = "w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl transition-all flex items-center justify-center gap-2 mt-1 shadow-lg bg-gradient-to-r from-purple-600 to-indigo-700 text-white animate-pulse";
 
     for (let i = 10; i >= 1; i--) {
         dom.bonusCount.innerText = i;
@@ -383,8 +462,7 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
     multiplier = currentSector.baseBonus;
     updateUI();
     
-    dom.spinBtn.classList.replace('from-purple-600', 'from-green-500');
-    dom.spinBtn.classList.replace('to-indigo-700', 'to-emerald-700');
+    applySectorTheme(currentSector);
     showMessage("Bônus encerrado! Pontos salvos no ranking.", "bg-blue-900", "text-blue-300");
     await delay(1500);
 }
@@ -452,11 +530,11 @@ function renderQrCodesModal() {
                         <p class="text-[10px] text-slate-400">${sector.sectorName}</p>
                     </div>
                 </div>
-                <p class="text-[11px] text-yellow-400 font-semibold my-1">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
+                <p class="text-[11px] font-semibold my-1 ${sector.theme.titleColor}">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
                 <div class="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                    <a href="${targetUrl}" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]">
+                    <button onclick="switchSector('${sector.id}'); dom.qrcodesModal.classList.add('hidden');" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]">
                         Jogar nesta Atlética
-                    </a>
+                    </button>
                     <button onclick="navigator.clipboard.writeText('${targetUrl}'); alert('Link copiado!');" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-lg text-[11px]">
                         Copiar Link
                     </button>

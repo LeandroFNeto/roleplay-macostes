@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafio das Atléticas - Mascotes Universitários</title>
+    <title>Desafio das Atléticas - Mascotes Universitários UENP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-950 text-slate-100">
+<body id="app-body" class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-950 text-slate-100 transition-colors duration-500">
 
     <!-- MODAL DE LOGIN SIMPLES -->
     <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
         <div class="bg-slate-900 border-2 border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
             <div class="text-5xl mb-3">🎓</div>
-            <h2 class="text-2xl font-black text-white mb-2">Desafio Universitário</h2>
+            <h2 class="text-2xl font-black text-white mb-2">Desafio das Atléticas</h2>
             <p class="text-xs text-slate-400 mb-6">Identifique-se para acumular pontos no ranking global dos centros acadêmicos!</p>
             
             <form id="login-form" class="flex flex-col gap-3">
@@ -41,7 +41,6 @@
                 <button id="close-ranking-btn" class="text-slate-400 hover:text-white text-xl p-1 font-bold">✕</button>
             </div>
             
-            <!-- Lista com Scroll -->
             <div id="ranking-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-sm">
                 <!-- Preenchido via JS -->
             </div>
@@ -62,8 +61,8 @@
                 <div class="flex items-center gap-2">
                     <span class="text-2xl">📱</span>
                     <div>
-                        <h3 class="font-black text-lg text-emerald-400">QR Codes dos Centros</h3>
-                        <p class="text-[10px] text-slate-400">Acesse ou imprima para cada prédio da faculdade</p>
+                        <h3 class="font-black text-lg text-emerald-400">QR Codes das Atléticas</h3>
+                        <p class="text-[10px] text-slate-400">Imprima ou escaneie o código de cada setor</p>
                     </div>
                 </div>
                 <button id="close-qrcodes-btn" class="text-slate-400 hover:text-white text-xl p-1 font-bold">✕</button>
@@ -86,42 +85,58 @@
         </div>
     </div>
 
-    <!-- TOPO DE NAVEGAÇÃO / SESSÃO -->
-    <header class="w-full max-w-lg mb-2 flex items-center justify-between px-2 text-xs">
-        <div class="flex items-center gap-2">
-            <span class="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-lg border border-yellow-500/30 font-bold flex items-center gap-1">
-                👤 <span id="ui-username">Convidado</span>
-            </span>
-            <button id="logout-btn" title="Trocar jogador" class="text-slate-400 hover:text-red-400 transition-colors underline font-medium">Sair</button>
+    <!-- SELETOR RÁPIDO DE ATLÉTICAS / MASCOTES NO TOPO -->
+    <div class="w-full max-w-lg mb-2 flex flex-col gap-1.5 px-1">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="bg-slate-800/80 text-yellow-400 px-2.5 py-1 rounded-lg border border-slate-700 font-bold flex items-center gap-1 shadow">
+                    👤 <span id="ui-username">Convidado</span>
+                </span>
+                <button id="logout-btn" title="Trocar jogador" class="text-slate-400 hover:text-red-400 transition-colors underline font-medium">Sair</button>
+            </div>
+            <div class="flex gap-1.5">
+                <button id="open-ranking-btn" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border border-slate-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow text-xs">
+                    🏆 Ranking
+                </button>
+                <button id="open-qrcodes-btn" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow text-xs">
+                    📱 QR Codes
+                </button>
+            </div>
         </div>
-        <div class="flex gap-2">
-            <button id="open-ranking-btn" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border border-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow">
-                🏆 Ranking
-            </button>
-            <button id="open-qrcodes-btn" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow">
-                📱 QR Codes
-            </button>
-        </div>
-    </header>
 
-    <main class="w-full max-w-lg machine-container rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col gap-4">
+        <!-- Carrossel de botões rápidos para alternar mascote -->
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none" id="mascot-quick-bar">
+            <!-- Gerado via JS com os 5 mascotes -->
+        </div>
+    </div>
+
+    <main id="machine-wrapper" class="w-full max-w-lg machine-container rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col gap-4 relative">
         
-        <!-- CABEÇALHO DO MASCOTE E SETOR -->
-        <header class="mascot-area rounded-2xl p-4 flex flex-col items-center justify-center relative shadow-lg">
-            <div id="sector-badge" class="absolute top-2 left-2 text-[10px] sm:text-xs font-bold bg-slate-800/80 text-yellow-400 px-2.5 py-1 rounded-full border border-yellow-500/30 uppercase tracking-wider">
-                Centro Tecnológico
-            </div>
+        <!-- CABEÇALHO DO MASCOTE HERO E SETOR -->
+        <header id="mascot-header-area" class="mascot-area rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center relative shadow-xl overflow-hidden">
+            
+            <!-- Badges superiores -->
+            <div class="w-full flex justify-between items-start z-20 mb-2">
+                <span id="sector-badge" class="text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+                    Ciência da Computação
+                </span>
 
-            <div id="sector-incentive-pill" class="absolute top-2 right-2 text-[10px] bg-emerald-950/80 text-emerald-300 font-bold px-2 py-0.5 rounded-md border border-emerald-500/40">
-                +100% Bônus
+                <span id="sector-incentive-pill" class="text-[10px] sm:text-xs font-extrabold px-2.5 py-1 rounded-lg shadow-md border">
+                    +100% Bônus
+                </span>
             </div>
             
-            <div id="sector-mascot-img" class="text-6xl sm:text-7xl mt-5 mb-1 drop-shadow-2xl relative z-10 transition-transform">🐗</div>
+            <!-- IMAGEM HERO GRANDE DO MASCOTE NO TOPO -->
+            <div id="sector-mascot-img" class="relative z-10 transition-transform flex items-center justify-center my-1">
+                <!-- Imagem preenchida via JS -->
+            </div>
             
-            <h2 id="sector-mascot-name" class="text-lg sm:text-xl font-black text-yellow-400 uppercase tracking-tight text-center relative z-10">
-                Javali do CT
+            <h2 id="sector-mascot-name" class="text-xl sm:text-2xl font-black uppercase tracking-tight text-center relative z-10 mt-1 drop-shadow-md">
+                Javali Ja-Vali
             </h2>
-            <p id="sector-incentive-desc" class="text-[11px] text-slate-300 font-medium text-center relative z-10">Setor Tecnológico ativado!</p>
+            <p id="sector-incentive-desc" class="text-xs text-slate-300 font-medium text-center relative z-10 max-w-xs mt-0.5">
+                Setor de Computação ativado!
+            </p>
 
             <!-- CARTA SURPRESA DO MASCOTE -->
             <div id="mascot-card" class="card-drop">🃏</div>
@@ -129,12 +144,12 @@
 
         <!-- PAINEL DE STATUS -->
         <section class="grid grid-cols-2 gap-3 text-center" aria-label="Status do Jogador">
-            <div class="bg-slate-800 p-2 sm:p-3 rounded-xl border border-slate-600 shadow-inner">
+            <div class="bg-slate-900/90 p-2 sm:p-3 rounded-xl border border-slate-700 shadow-inner">
                 <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1">Saldo de Pontos</p>
                 <p id="ui-saldo" class="text-xl sm:text-2xl font-black text-green-400">5000</p>
             </div>
-            <div id="multiplier-box" class="bg-slate-800 p-2 sm:p-3 rounded-xl border border-slate-600 shadow-inner transition-colors duration-300">
-                <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1" id="ui-multi-label">Multiplicador do Setor</p>
+            <div id="multiplier-box" class="bg-slate-900/90 p-2 sm:p-3 rounded-xl border border-slate-700 shadow-inner transition-all duration-300">
+                <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1" id="ui-multi-label">Multiplicador da Atlética</p>
                 <p id="ui-multiplier" class="text-xl sm:text-2xl font-black text-yellow-400">2.0x</p>
             </div>
         </section>
@@ -147,7 +162,7 @@
         </div>
 
         <!-- GRADE DO JOGO 3x3 -->
-        <section class="bg-slate-900 p-3 sm:p-4 rounded-2xl border-4 border-slate-700 shadow-xl" aria-label="Grade de Rolos">
+        <section class="bg-slate-900/90 p-3 sm:p-4 rounded-2xl border-4 border-slate-700/80 shadow-2xl" aria-label="Grade de Rolos">
             <div class="grid grid-cols-3 gap-2 sm:gap-3" id="slot-grid">
                 <!-- Preenchido via JS -->
             </div>
@@ -157,26 +172,26 @@
         <section aria-label="Configuração de Aposta">
             <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-2 text-center">Sua Aposta</p>
             <div class="grid grid-cols-4 gap-2" id="bet-options">
-                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="50">50</button>
-                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="100">100</button>
-                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="200">200</button>
-                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="500">500</button>
+                <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="50">50</button>
+                <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="100">100</button>
+                <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="200">200</button>
+                <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="500">500</button>
             </div>
         </section>
 
         <!-- CAIXA DE MENSAGEM -->
-        <div id="message-box" class="h-12 sm:h-14 flex items-center justify-center text-center text-sm font-bold rounded-xl bg-slate-800 text-slate-300 border border-slate-700 transition-colors">
+        <div id="message-box" class="h-12 sm:h-14 flex items-center justify-center text-center text-sm font-bold rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700 transition-colors">
             Escolha sua aposta para começar!
         </div>
 
-        <!-- BOTÃO PRINCIPAL -->
-        <button id="spin-btn" class="w-full bg-gradient-to-b from-green-500 to-emerald-700 hover:from-green-400 hover:to-emerald-600 text-white font-black text-2xl sm:text-3xl py-4 rounded-2xl shadow-[0_5px_0_#065f46] active:shadow-[0_0px_0_#065f46] active:translate-y-[5px] transition-all flex items-center justify-center gap-2 mt-2">
+        <!-- BOTÃO PRINCIPAL COM COR DINÂMICA DO MASCOTE -->
+        <button id="spin-btn" class="w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg">
             🎰 GIRAR
         </button>
     </main>
 
     <footer class="mt-4 text-xs text-slate-500 text-center max-w-sm">
-        Circule pelos centros acadêmicos e escaneie os QR Codes para desbloquear mascotes e bônus maiores!
+        Circule pelos centros da UENP e escaneie os QR Codes para desbloquear a cor e o bônus de cada atlética!
     </footer>
 
     <!-- MÓDULOS JAVASCRIPT EM ORDEM DE DEPENDÊNCIA -->

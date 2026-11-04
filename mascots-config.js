@@ -1,4 +1,4 @@
-// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos
+// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos com Temas Visuais Exclusivos
 const MASCOTS_CATALOG = {
     'computacao': {
         id: 'computacao',
@@ -9,8 +9,22 @@ const MASCOTS_CATALOG = {
         image: 'assets/mascots/computacao-javali.png',
         symbols: ['🐗', '💻', '⚡', '⌨️', '🚀'],
         baseBonus: 2.0,
-        badgeColor: 'from-red-600 to-slate-900',
-        incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)'
+        incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)',
+        theme: {
+            primary: '#dc2626',
+            accent: '#ef4444',
+            bgOverlay: 'from-red-950/40 via-slate-900 to-black',
+            headerBg: 'bg-gradient-to-b from-red-950 via-slate-900 to-black',
+            headerBorder: 'border-red-600/60',
+            headerGlow: 'shadow-[0_0_30px_rgba(220,38,38,0.4)]',
+            machineBorder: 'border-red-600/50',
+            machineGlow: 'shadow-[0_20px_50px_rgba(220,38,38,0.25)]',
+            badgeBg: 'bg-red-600 text-white',
+            pillBg: 'bg-red-950/80 text-red-300 border-red-500/50',
+            titleColor: 'text-red-400',
+            spinBtnClass: 'bg-gradient-to-b from-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white shadow-[0_5px_0_#450a0a]',
+            avatarGlow: 'border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.6)]'
+        }
     },
     'enfermagem': {
         id: 'enfermagem',
@@ -21,8 +35,22 @@ const MASCOTS_CATALOG = {
         image: 'assets/mascots/enfermagem-abelha.png',
         symbols: ['🐝', '💉', '🩹', '🩺', '🍯'],
         baseBonus: 3.0,
-        badgeColor: 'from-yellow-500 to-amber-700',
-        incentiveText: 'Setor de Saúde: Ferrão da Abelha! (+200% bônus especial)'
+        incentiveText: 'Setor de Saúde: Ferrão da Abelha! (+200% bônus especial)',
+        theme: {
+            primary: '#eab308',
+            accent: '#facc15',
+            bgOverlay: 'from-amber-950/40 via-slate-900 to-black',
+            headerBg: 'bg-gradient-to-b from-amber-950 via-slate-900 to-black',
+            headerBorder: 'border-yellow-500/60',
+            headerGlow: 'shadow-[0_0_30px_rgba(234,179,8,0.4)]',
+            machineBorder: 'border-yellow-500/50',
+            machineGlow: 'shadow-[0_20px_50px_rgba(234,179,8,0.25)]',
+            badgeBg: 'bg-yellow-500 text-slate-950 font-black',
+            pillBg: 'bg-amber-950/80 text-yellow-300 border-yellow-500/50',
+            titleColor: 'text-yellow-400',
+            spinBtnClass: 'bg-gradient-to-b from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black shadow-[0_5px_0_#78350f]',
+            avatarGlow: 'border-yellow-400 shadow-[0_0_25px_rgba(234,179,8,0.6)]'
+        }
     },
     'veterinaria': {
         id: 'veterinaria',
@@ -33,8 +61,22 @@ const MASCOTS_CATALOG = {
         image: 'assets/mascots/veterinaria-burro.png',
         symbols: ['🫏', '🐴', '🌾', '🐾', '🩺'],
         baseBonus: 2.5,
-        badgeColor: 'from-emerald-700 to-green-950',
-        incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)'
+        incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)',
+        theme: {
+            primary: '#16a34a',
+            accent: '#22c55e',
+            bgOverlay: 'from-emerald-950/40 via-slate-900 to-black',
+            headerBg: 'bg-gradient-to-b from-emerald-950 via-slate-900 to-black',
+            headerBorder: 'border-emerald-600/60',
+            headerGlow: 'shadow-[0_0_30px_rgba(22,163,74,0.4)]',
+            machineBorder: 'border-emerald-600/50',
+            machineGlow: 'shadow-[0_20px_50px_rgba(22,163,74,0.25)]',
+            badgeBg: 'bg-emerald-600 text-white font-bold',
+            pillBg: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50',
+            titleColor: 'text-emerald-400',
+            spinBtnClass: 'bg-gradient-to-b from-emerald-600 to-green-800 hover:from-emerald-500 hover:to-green-700 text-white shadow-[0_5px_0_#064e3b]',
+            avatarGlow: 'border-emerald-400 shadow-[0_0_25px_rgba(34,197,94,0.6)]'
+        }
     },
     'agronomia': {
         id: 'agronomia',
@@ -45,8 +87,22 @@ const MASCOTS_CATALOG = {
         image: 'assets/mascots/agronomia-galo.png',
         symbols: ['🐓', '🌾', '🚜', '🍺', '🌽'],
         baseBonus: 2.2,
-        badgeColor: 'from-rose-800 to-red-950',
-        incentiveText: 'Setor do Campo & Agro: Canto do Galo Campeão! (+120% bônus)'
+        incentiveText: 'Setor do Campo & Agro: Canto do Galo Campeão! (+120% bônus)',
+        theme: {
+            primary: '#e11d48',
+            accent: '#f43f5e',
+            bgOverlay: 'from-rose-950/40 via-slate-900 to-black',
+            headerBg: 'bg-gradient-to-b from-rose-950 via-slate-900 to-black',
+            headerBorder: 'border-rose-600/60',
+            headerGlow: 'shadow-[0_0_30px_rgba(225,29,72,0.4)]',
+            machineBorder: 'border-rose-600/50',
+            machineGlow: 'shadow-[0_20px_50px_rgba(225,29,72,0.25)]',
+            badgeBg: 'bg-rose-700 text-white font-bold',
+            pillBg: 'bg-rose-950/80 text-rose-300 border-rose-500/50',
+            titleColor: 'text-rose-400',
+            spinBtnClass: 'bg-gradient-to-b from-rose-600 to-red-900 hover:from-rose-500 hover:to-red-800 text-white shadow-[0_5px_0_#4c0519]',
+            avatarGlow: 'border-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.6)]'
+        }
     },
     'biologia': {
         id: 'biologia',
@@ -57,8 +113,22 @@ const MASCOTS_CATALOG = {
         image: 'assets/mascots/biologia-tigre.png',
         symbols: ['🐯', '🧬', '🔬', '🌿', '🍻'],
         baseBonus: 2.4,
-        badgeColor: 'from-amber-600 to-red-900',
-        incentiveText: 'Setor de Biologia: A Máfia comanda a bancada! (+140% bônus)'
+        incentiveText: 'Setor de Biologia: A Máfia comanda a bancada! (+140% bônus)',
+        theme: {
+            primary: '#ea580c',
+            accent: '#f97316',
+            bgOverlay: 'from-amber-950/40 via-slate-900 to-black',
+            headerBg: 'bg-gradient-to-b from-amber-950 via-slate-900 to-black',
+            headerBorder: 'border-orange-500/60',
+            headerGlow: 'shadow-[0_0_30px_rgba(234,88,12,0.4)]',
+            machineBorder: 'border-orange-500/50',
+            machineGlow: 'shadow-[0_20px_50px_rgba(234,88,12,0.25)]',
+            badgeBg: 'bg-gradient-to-r from-amber-600 to-orange-600 text-white font-black',
+            pillBg: 'bg-orange-950/80 text-orange-300 border-orange-500/50',
+            titleColor: 'text-amber-400',
+            spinBtnClass: 'bg-gradient-to-b from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black shadow-[0_5px_0_#7c2d12]',
+            avatarGlow: 'border-orange-500 shadow-[0_0_25px_rgba(249,115,22,0.6)]'
+        }
     }
 };
 
