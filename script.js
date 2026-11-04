@@ -266,21 +266,45 @@ function lockControls(lock) {
     }
 }
 
-// ANIMAÇÃO DO MASCOTE JOGANDO A CARTA
+// ANIMAÇÃO DO MASCOTE SOLTANDO A CARTA COLECIONÁVEL 3D
 async function triggerMascotBuff() {
     const buffOptions = [2, 3, 5];
     activeMascotMultiplier = buffOptions[Math.floor(Math.random() * buffOptions.length)];
     
-    dom.mascotCard.innerText = `🃏 ${activeMascotMultiplier}x`;
-    dom.mascotImg.classList.add('mascot-jump');
-    dom.mascotCard.classList.add('card-dropping');
+    // Atualiza arte e dados da carta TCG
+    const cardArt = document.getElementById('tcg-card-art');
+    const cardName = document.getElementById('tcg-card-name');
+    const cardBuff = document.getElementById('tcg-card-buff');
+    const cardHeader = document.getElementById('tcg-card-header');
+    const cardIcon = document.getElementById('tcg-card-icon');
+    const tcgCardInner = document.getElementById('tcg-card-inner');
+
+    if (currentSector.image && cardArt) {
+        cardArt.src = currentSector.image;
+    }
+    if (cardName) cardName.innerText = currentSector.mascotName;
+    if (cardBuff) cardBuff.innerText = `BÔNUS ${activeMascotMultiplier}x`;
+    if (cardHeader) cardHeader.innerText = currentSector.athleticName || 'UENP';
+    if (cardIcon) cardIcon.innerText = currentSector.icon;
+
+    if (tcgCardInner && currentSector.theme) {
+        tcgCardInner.style.borderColor = currentSector.theme.primary;
+        tcgCardInner.style.boxShadow = `0 0 40px ${currentSector.theme.primary}, 0 20px 40px rgba(0,0,0,0.9)`;
+    }
+
+    dom.mascotImg.classList.add('mascot-throw');
+    dom.mascotCard.classList.add('card-launching');
     
-    showMessage(`O ${currentSector.mascotName} jogou a Carta! Bônus de ${activeMascotMultiplier}x!`, "bg-yellow-600", "text-white");
+    showMessage(`🔥 O ${currentSector.mascotName} soltou a Carta! Bônus de ${activeMascotMultiplier}x ativado!`, "bg-yellow-600", "text-white");
     
+    // Tempo até a carta descer e colidir nos rolos
     await delay(1200);
-    
-    dom.mascotImg.classList.remove('mascot-jump');
-    dom.mascotCard.classList.remove('card-dropping');
+    dom.grid.classList.add('grid-impact-flash');
+    await delay(400);
+    dom.grid.classList.remove('grid-impact-flash');
+
+    dom.mascotImg.classList.remove('mascot-throw');
+    dom.mascotCard.classList.remove('card-launching');
 }
 
 // ANIMAÇÃO DOS ROLOS COM SÍMBOLOS DO SETOR ATIVO
@@ -545,7 +569,15 @@ function renderQrCodesModal() {
     });
 }
 
-// CONTROLES DE MODAIS
+// CONTROLES DE MODAIS E TESTES
+const testCardBtn = document.getElementById('test-card-btn');
+if (testCardBtn) {
+    testCardBtn.addEventListener('click', async () => {
+        if (isSpinning) return;
+        await triggerMascotBuff();
+    });
+}
+
 dom.openRankingBtn.addEventListener('click', () => {
     renderRanking(RankingService.getRanking());
     dom.rankingModal.classList.remove('hidden');

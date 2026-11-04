@@ -95,6 +95,9 @@
                 <button id="logout-btn" title="Trocar jogador" class="text-slate-400 hover:text-red-400 transition-colors underline font-medium">Sair</button>
             </div>
             <div class="flex gap-1.5">
+                <button id="test-card-btn" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white border border-yellow-500/50 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow text-xs">
+                    🃏 Testar Carta
+                </button>
                 <button id="open-ranking-btn" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border border-slate-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow text-xs">
                     🏆 Ranking
                 </button>
@@ -138,8 +141,22 @@
                 Setor de Computação ativado!
             </p>
 
-            <!-- CARTA SURPRESA DO MASCOTE -->
-            <div id="mascot-card" class="card-drop">🃏</div>
+            <!-- CARTA COLECIONÁVEL 3D ANIMADA DO MASCOTE -->
+            <div id="mascot-card" class="tcg-card-wrap">
+                <div id="tcg-card-inner" class="tcg-card">
+                    <div class="w-full flex justify-between items-center text-[9px] font-black tracking-wider text-yellow-300">
+                        <span id="tcg-card-header">UENP</span>
+                        <span id="tcg-card-icon">🃏</span>
+                    </div>
+                    <div class="my-auto flex flex-col items-center">
+                        <img id="tcg-card-art" src="" alt="Carta Mascote" class="w-14 h-14 rounded-full object-cover border-2 border-yellow-400 shadow-md mb-1 bg-black">
+                        <span id="tcg-card-name" class="text-[10px] font-black text-center text-white uppercase max-w-[110px] truncate">Mascote</span>
+                    </div>
+                    <div class="w-full text-center bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black rounded-lg py-1 text-xs shadow-md">
+                        <span id="tcg-card-buff">BUFF 3x</span>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <!-- PAINEL DE STATUS -->
