@@ -5,12 +5,11 @@ const RankingService = {
     timerId: null,
 
     defaultLeaders: [
-        { nickname: 'Javali_Tech', score: 18450, sector: 'Centro Tecnológico (CT)', icon: '🐗' },
-        { nickname: 'Abelha_Rainha', score: 14200, sector: 'Centro de Enfermagem', icon: '🐝' },
-        { nickname: 'Leo_Cirurgiao', score: 12500, sector: 'Centro de Medicina', icon: '🦁' },
-        { nickname: 'Urso_Branco', score: 9800, sector: 'Centro de Odontologia', icon: '🐻' },
-        { nickname: 'Lobo_Solitario', score: 8750, sector: 'Centro de Informática & TI', icon: '🐺' },
-        { nickname: 'Aguia_Legal', score: 6500, sector: 'Centro de Ciências Jurídicas', icon: '🦅' }
+        { nickname: 'JaVali_BCC', score: 18450, sector: 'Ciência da Computação - UENP', icon: '🐗' },
+        { nickname: 'Abelha_XXI', score: 16200, sector: 'Enfermagem - UENP', icon: '🐝' },
+        { nickname: 'Coice_Vet', score: 14800, sector: 'Medicina Veterinária - UENP', icon: '🫏' },
+        { nickname: 'Bixo_Computacao', score: 9800, sector: 'Ciência da Computação - UENP', icon: '🐗' },
+        { nickname: 'Veterano_Enf', score: 8750, sector: 'Enfermagem - UENP', icon: '🐝' }
     ],
 
     getRanking() {

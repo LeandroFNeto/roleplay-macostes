@@ -1,84 +1,68 @@
-// Catálogo modular de mascotes e centros acadêmicos da universidade
+// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos
 const MASCOTS_CATALOG = {
-    'tecnologico': {
-        id: 'tecnologico',
-        sectorName: 'Centro Tecnológico (CT)',
-        mascotName: 'Javali do CT',
+    'computacao': {
+        id: 'computacao',
+        sectorName: 'Ciência da Computação - UENP',
+        athleticName: 'A.A.A.J.V. Ja-Vali',
+        mascotName: 'Javali Ja-Vali',
         icon: '🐗',
-        symbols: ['🐗', '⚙️', '💻', '⚡', '🔋'],
+        image: 'assets/mascots/computacao-javali.png',
+        symbols: ['🐗', '💻', '⚡', '⌨️', '🚀'],
         baseBonus: 2.0,
-        badgeColor: 'from-amber-600 to-orange-700',
-        incentiveText: 'Setor Tecnológico: +100% no multiplicador!'
+        badgeColor: 'from-red-600 to-slate-900',
+        incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)'
     },
     'enfermagem': {
         id: 'enfermagem',
-        sectorName: 'Centro de Enfermagem',
-        mascotName: 'Abelha da Saúde',
+        sectorName: 'Enfermagem - UENP',
+        athleticName: 'A.A.A. XXI de Julho',
+        mascotName: 'Abelha Rainha',
         icon: '🐝',
+        image: 'assets/mascots/enfermagem-abelha.png',
         symbols: ['🐝', '💉', '🩹', '🩺', '🍯'],
         baseBonus: 3.0,
-        badgeColor: 'from-yellow-500 to-amber-600',
-        incentiveText: 'Setor de Alta Premiação: +200% no multiplicador!'
+        badgeColor: 'from-yellow-500 to-amber-700',
+        incentiveText: 'Setor de Saúde: Ferrão da Abelha! (+200% bônus especial)'
     },
-    'medicina': {
-        id: 'medicina',
-        sectorName: 'Centro de Medicina',
-        mascotName: 'Leão da Med',
-        icon: '🦁',
-        symbols: ['🦁', '🩺', '🧬', '❤️', '💊'],
+    'veterinaria': {
+        id: 'veterinaria',
+        sectorName: 'Medicina Veterinária - UENP',
+        athleticName: 'A.A.A. Coice de Burro',
+        mascotName: 'Coice de Burro',
+        icon: '🫏',
+        image: 'assets/mascots/veterinaria-burro.png',
+        symbols: ['🫏', '🐴', '🌾', '🐾', '🩺'],
         baseBonus: 2.5,
-        badgeColor: 'from-emerald-600 to-teal-800',
-        incentiveText: 'Setor Saúde: +150% no multiplicador!'
-    },
-    'computacao': {
-        id: 'computacao',
-        sectorName: 'Centro de Informática & TI',
-        mascotName: 'Lobo da TI',
-        icon: '🐺',
-        symbols: ['🐺', '💻', '⌨️', '🌐', '🚀'],
-        baseBonus: 2.0,
-        badgeColor: 'from-blue-600 to-indigo-800',
-        incentiveText: 'Setor TI: Bônus de 2x ativado!'
-    },
-    'odontologia': {
-        id: 'odontologia',
-        sectorName: 'Centro de Odontologia',
-        mascotName: 'Urso da Odonto',
-        icon: '🐻',
-        symbols: ['🐻', '🦷', '🪥', '✨', '💎'],
-        baseBonus: 2.2,
-        badgeColor: 'from-cyan-600 to-blue-700',
-        incentiveText: 'Setor Odonto: Bônus Sorriso de 2.2x!'
-    },
-    'direito': {
-        id: 'direito',
-        sectorName: 'Centro de Ciências Jurídicas',
-        mascotName: 'Águia do Direito',
-        icon: '🦅',
-        symbols: ['🦅', '⚖️', '📜', '🏛️', '✒️'],
-        baseBonus: 1.8,
-        badgeColor: 'from-purple-600 to-slate-800',
-        incentiveText: 'Setor Jurídico: Bônus de 1.8x!'
+        badgeColor: 'from-emerald-700 to-green-950',
+        incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)'
     }
 };
 
-// Aliases para compatibilidade de parâmetros URL (?setor=... ou ?mascote=...)
+// Aliases para leitura via QR Code e URLs amigáveis
 const MASCOTS_ALIASES = {
-    'javali': 'tecnologico',
-    'ct': 'tecnologico',
+    // Computação
+    'computacao': 'computacao',
+    'cc': 'computacao',
+    'bcc': 'computacao',
+    'javali': 'computacao',
+    'tecnologico': 'computacao',
+    'ct': 'computacao',
+
+    // Enfermagem
+    'enfermagem': 'enfermagem',
+    'enf': 'enfermagem',
     'abelha': 'enfermagem',
-    'leao': 'medicina',
-    'med': 'medicina',
-    'lobo': 'computacao',
-    'ti': 'computacao',
-    'urso': 'odontologia',
-    'odonto': 'odontologia',
-    'aguia': 'direito'
+
+    // Veterinária
+    'veterinaria': 'veterinaria',
+    'vet': 'veterinaria',
+    'burro': 'veterinaria',
+    'coice': 'veterinaria'
 };
 
 function getSectorConfig(param) {
-    if (!param) return MASCOTS_CATALOG['tecnologico'];
+    if (!param) return MASCOTS_CATALOG['computacao'];
     const normalized = String(param).toLowerCase().trim();
     const resolvedId = MASCOTS_ALIASES[normalized] || normalized;
-    return MASCOTS_CATALOG[resolvedId] || MASCOTS_CATALOG['tecnologico'];
+    return MASCOTS_CATALOG[resolvedId] || MASCOTS_CATALOG['computacao'];
 }

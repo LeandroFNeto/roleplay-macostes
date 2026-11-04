@@ -89,10 +89,18 @@ function initSector() {
     currentSector = getSectorConfig(param);
 
     // Atualiza elementos visuais do setor
-    dom.sectorBadge.innerText = currentSector.sectorName;
+    dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
     dom.sectorPill.innerText = `+${Math.round((currentSector.baseBonus - 1) * 100)}% Bônus`;
     dom.sectorDesc.innerText = currentSector.incentiveText;
-    dom.mascotImg.innerText = currentSector.icon;
+    
+    if (currentSector.image) {
+        dom.mascotImg.innerHTML = `<img src="${currentSector.image}" alt="${currentSector.mascotName}" class="h-20 sm:h-24 w-20 sm:w-24 object-cover rounded-full border-2 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)] bg-black/60">`;
+        dom.mascotImg.className = "mt-4 mb-1 relative z-10 transition-transform flex items-center justify-center";
+    } else {
+        dom.mascotImg.innerText = currentSector.icon;
+        dom.mascotImg.className = "text-6xl sm:text-7xl mt-5 mb-1 drop-shadow-2xl relative z-10 transition-transform";
+    }
+
     dom.mascotName.innerText = currentSector.mascotName;
     
     // Multiplicador base inicial do setor
@@ -427,22 +435,27 @@ function renderQrCodesModal() {
 
     Object.values(MASCOTS_CATALOG).forEach(sector => {
         const targetUrl = `${currentBaseUrl}?setor=${sector.id}`;
-        // Serviço público gratuito de QR Code SVG direto via imagem
         const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
+        const mascotBadge = sector.image 
+            ? `<img src="${sector.image}" class="w-8 h-8 rounded-full object-cover border border-yellow-400">`
+            : `<span class="text-xl">${sector.icon}</span>`;
 
         const card = document.createElement('div');
         card.className = 'p-3 bg-slate-800 rounded-2xl border border-slate-700 flex flex-col sm:flex-row items-center gap-3';
         card.innerHTML = `
             <img src="${qrImgUrl}" alt="QR Code ${sector.sectorName}" class="w-24 h-24 rounded-lg bg-white p-1 shadow-md">
             <div class="flex-1 text-center sm:text-left">
-                <div class="flex items-center justify-center sm:justify-start gap-1">
-                    <span class="text-xl">${sector.icon}</span>
-                    <h4 class="font-black text-white text-sm">${sector.sectorName}</h4>
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    ${mascotBadge}
+                    <div>
+                        <h4 class="font-black text-white text-sm">${sector.athleticName || sector.sectorName}</h4>
+                        <p class="text-[10px] text-slate-400">${sector.sectorName}</p>
+                    </div>
                 </div>
-                <p class="text-[11px] text-yellow-400 font-semibold mb-1">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
+                <p class="text-[11px] text-yellow-400 font-semibold my-1">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
                 <div class="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
                     <a href="${targetUrl}" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]">
-                        Jogar neste Setor
+                        Jogar nesta Atlética
                     </a>
                     <button onclick="navigator.clipboard.writeText('${targetUrl}'); alert('Link copiado!');" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-lg text-[11px]">
                         Copiar Link
