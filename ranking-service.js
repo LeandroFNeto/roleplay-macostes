@@ -6,10 +6,11 @@ const RankingService = {
 
     defaultLeaders: [
         { nickname: 'JaVali_BCC', score: 18450, sector: 'Ciência da Computação - UENP', icon: '🐗' },
+        { nickname: 'Galo_Agro', score: 17100, sector: 'Agronomia - UENP', icon: '🐓' },
         { nickname: 'Abelha_XXI', score: 16200, sector: 'Enfermagem - UENP', icon: '🐝' },
+        { nickname: 'Mafia_Bio', score: 15300, sector: 'Ciências Biológicas - UENP', icon: '🐯' },
         { nickname: 'Coice_Vet', score: 14800, sector: 'Medicina Veterinária - UENP', icon: '🫏' },
-        { nickname: 'Bixo_Computacao', score: 9800, sector: 'Ciência da Computação - UENP', icon: '🐗' },
-        { nickname: 'Veterano_Enf', score: 8750, sector: 'Enfermagem - UENP', icon: '🐝' }
+        { nickname: 'Bixo_Computacao', score: 9800, sector: 'Ciência da Computação - UENP', icon: '🐗' }
     ],
 
     getRanking() {

@@ -35,6 +35,30 @@ const MASCOTS_CATALOG = {
         baseBonus: 2.5,
         badgeColor: 'from-emerald-700 to-green-950',
         incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)'
+    },
+    'agronomia': {
+        id: 'agronomia',
+        sectorName: 'Agronomia - UENP',
+        athleticName: 'A.A.A. Rabo de Galo',
+        mascotName: 'Galo Rabo de Galo',
+        icon: '🐓',
+        image: 'assets/mascots/agronomia-galo.png',
+        symbols: ['🐓', '🌾', '🚜', '🍺', '🌽'],
+        baseBonus: 2.2,
+        badgeColor: 'from-rose-800 to-red-950',
+        incentiveText: 'Setor do Campo & Agro: Canto do Galo Campeão! (+120% bônus)'
+    },
+    'biologia': {
+        id: 'biologia',
+        sectorName: 'Ciências Biológicas - UENP',
+        athleticName: 'A.A.A. Máfia Etílica',
+        mascotName: 'Máfia Etílica (Tigre)',
+        icon: '🐯',
+        image: 'assets/mascots/biologia-tigre.png',
+        symbols: ['🐯', '🧬', '🔬', '🌿', '🍻'],
+        baseBonus: 2.4,
+        badgeColor: 'from-amber-600 to-red-900',
+        incentiveText: 'Setor de Biologia: A Máfia comanda a bancada! (+140% bônus)'
     }
 };
 
@@ -57,7 +81,21 @@ const MASCOTS_ALIASES = {
     'veterinaria': 'veterinaria',
     'vet': 'veterinaria',
     'burro': 'veterinaria',
-    'coice': 'veterinaria'
+    'coice': 'veterinaria',
+
+    // Agronomia
+    'agronomia': 'agronomia',
+    'agro': 'agronomia',
+    'galo': 'agronomia',
+    'rabodegalo': 'agronomia',
+
+    // Biologia
+    'biologia': 'biologia',
+    'bio': 'biologia',
+    'mafia': 'biologia',
+    'mafiaetilica': 'biologia',
+    'tigre': 'biologia',
+    'urso': 'biologia'
 };
 
 function getSectorConfig(param) {
