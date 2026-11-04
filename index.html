@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio das Atléticas - Mascotes Universitários</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-950 text-slate-100">
+
+    <!-- MODAL DE LOGIN SIMPLES -->
+    <div id="login-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+        <div class="bg-slate-900 border-2 border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <div class="text-5xl mb-3">🎓</div>
+            <h2 class="text-2xl font-black text-white mb-2">Desafio Universitário</h2>
+            <p class="text-xs text-slate-400 mb-6">Identifique-se para acumular pontos no ranking global dos centros acadêmicos!</p>
+            
+            <form id="login-form" class="flex flex-col gap-3">
+                <input type="text" id="login-input" placeholder="Seu Apelido ou Matrícula/RA" required maxlength="25"
+                    class="bg-slate-800 text-white placeholder-slate-500 border border-slate-700 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <button type="submit" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all">
+                    ENTRAR E JOGAR
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DO RANKING GLOBAL -->
+    <div id="ranking-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3">
+        <div class="bg-slate-900 border-2 border-yellow-500/50 w-full max-w-md rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🏆</span>
+                    <div>
+                        <h3 class="font-black text-lg text-yellow-400">Ranking dos Centros</h3>
+                        <p class="text-[10px] text-slate-400">Atualiza automaticamente a cada 30s</p>
+                    </div>
+                </div>
+                <button id="close-ranking-btn" class="text-slate-400 hover:text-white text-xl p-1 font-bold">✕</button>
+            </div>
+            
+            <!-- Lista com Scroll -->
+            <div id="ranking-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-sm">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 mt-2 flex justify-between items-center text-xs text-slate-400">
+                <span id="ranking-sync-indicator" class="flex items-center gap-1">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span> Sincronizado
+                </span>
+                <span id="ranking-my-rank" class="font-bold text-yellow-400">Sua posição: -</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE QR CODES DOS CENTROS / SETORES -->
+    <div id="qrcodes-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3">
+        <div class="bg-slate-900 border-2 border-slate-700 w-full max-w-md rounded-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📱</span>
+                    <div>
+                        <h3 class="font-black text-lg text-emerald-400">QR Codes dos Centros</h3>
+                        <p class="text-[10px] text-slate-400">Acesse ou imprima para cada prédio da faculdade</p>
+                    </div>
+                </div>
+                <button id="close-qrcodes-btn" class="text-slate-400 hover:text-white text-xl p-1 font-bold">✕</button>
+            </div>
+
+            <div id="qrcodes-list" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY BÔNUS WIN GIGANTE -->
+    <div id="bonus-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity">
+        <div class="text-center overlay-enter p-4">
+            <h1 id="overlay-title" class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-green-400 via-yellow-400 to-green-500 drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)] mb-4">
+                BÔNUS WIN!
+            </h1>
+            <p id="overlay-subtitle" class="text-3xl md:text-5xl font-black text-white mb-6">10 RODADAS AUTOMÁTICAS</p>
+            <p id="overlay-multi-text" class="text-xl md:text-3xl text-yellow-300 font-bold bg-slate-800/80 inline-block px-8 py-3 rounded-full border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.5)]">Multiplicador inicial 2x!</p>
+        </div>
+    </div>
+
+    <!-- TOPO DE NAVEGAÇÃO / SESSÃO -->
+    <header class="w-full max-w-lg mb-2 flex items-center justify-between px-2 text-xs">
+        <div class="flex items-center gap-2">
+            <span class="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-lg border border-yellow-500/30 font-bold flex items-center gap-1">
+                👤 <span id="ui-username">Convidado</span>
+            </span>
+            <button id="logout-btn" title="Trocar jogador" class="text-slate-400 hover:text-red-400 transition-colors underline font-medium">Sair</button>
+        </div>
+        <div class="flex gap-2">
+            <button id="open-ranking-btn" class="bg-slate-800 hover:bg-slate-700 text-yellow-400 border border-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow">
+                🏆 Ranking
+            </button>
+            <button id="open-qrcodes-btn" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow">
+                📱 QR Codes
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-lg machine-container rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col gap-4">
+        
+        <!-- CABEÇALHO DO MASCOTE E SETOR -->
+        <header class="mascot-area rounded-2xl p-4 flex flex-col items-center justify-center relative shadow-lg">
+            <div id="sector-badge" class="absolute top-2 left-2 text-[10px] sm:text-xs font-bold bg-slate-800/80 text-yellow-400 px-2.5 py-1 rounded-full border border-yellow-500/30 uppercase tracking-wider">
+                Centro Tecnológico
+            </div>
+
+            <div id="sector-incentive-pill" class="absolute top-2 right-2 text-[10px] bg-emerald-950/80 text-emerald-300 font-bold px-2 py-0.5 rounded-md border border-emerald-500/40">
+                +100% Bônus
+            </div>
+            
+            <div id="sector-mascot-img" class="text-6xl sm:text-7xl mt-5 mb-1 drop-shadow-2xl relative z-10 transition-transform">🐗</div>
+            
+            <h2 id="sector-mascot-name" class="text-lg sm:text-xl font-black text-yellow-400 uppercase tracking-tight text-center relative z-10">
+                Javali do CT
+            </h2>
+            <p id="sector-incentive-desc" class="text-[11px] text-slate-300 font-medium text-center relative z-10">Setor Tecnológico ativado!</p>
+
+            <!-- CARTA SURPRESA DO MASCOTE -->
+            <div id="mascot-card" class="card-drop">🃏</div>
+        </header>
+
+        <!-- PAINEL DE STATUS -->
+        <section class="grid grid-cols-2 gap-3 text-center" aria-label="Status do Jogador">
+            <div class="bg-slate-800 p-2 sm:p-3 rounded-xl border border-slate-600 shadow-inner">
+                <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1">Saldo de Pontos</p>
+                <p id="ui-saldo" class="text-xl sm:text-2xl font-black text-green-400">5000</p>
+            </div>
+            <div id="multiplier-box" class="bg-slate-800 p-2 sm:p-3 rounded-xl border border-slate-600 shadow-inner transition-colors duration-300">
+                <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1" id="ui-multi-label">Multiplicador do Setor</p>
+                <p id="ui-multiplier" class="text-xl sm:text-2xl font-black text-yellow-400">2.0x</p>
+            </div>
+        </section>
+
+        <!-- ALERTA DE RODADAS DO BÔNUS -->
+        <div id="bonus-alert" class="hidden bg-gradient-to-r from-green-600 to-emerald-600 p-2 rounded-xl text-center border-2 border-green-400 shadow-[0_0_15px_rgba(52,211,153,0.5)] animate-pulse">
+            <p class="text-sm font-black text-white uppercase tracking-widest">
+                Rodada Bônus: <span id="ui-bonus-count" class="text-yellow-300 text-xl ml-1">10</span> / 10
+            </p>
+        </div>
+
+        <!-- GRADE DO JOGO 3x3 -->
+        <section class="bg-slate-900 p-3 sm:p-4 rounded-2xl border-4 border-slate-700 shadow-xl" aria-label="Grade de Rolos">
+            <div class="grid grid-cols-3 gap-2 sm:gap-3" id="slot-grid">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- OPÇÕES DE APOSTA -->
+        <section aria-label="Configuração de Aposta">
+            <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-2 text-center">Sua Aposta</p>
+            <div class="grid grid-cols-4 gap-2" id="bet-options">
+                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="50">50</button>
+                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="100">100</button>
+                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="200">200</button>
+                <button class="bet-btn bg-slate-700 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-900 transition-all text-sm sm:text-base" data-bet="500">500</button>
+            </div>
+        </section>
+
+        <!-- CAIXA DE MENSAGEM -->
+        <div id="message-box" class="h-12 sm:h-14 flex items-center justify-center text-center text-sm font-bold rounded-xl bg-slate-800 text-slate-300 border border-slate-700 transition-colors">
+            Escolha sua aposta para começar!
+        </div>
+
+        <!-- BOTÃO PRINCIPAL -->
+        <button id="spin-btn" class="w-full bg-gradient-to-b from-green-500 to-emerald-700 hover:from-green-400 hover:to-emerald-600 text-white font-black text-2xl sm:text-3xl py-4 rounded-2xl shadow-[0_5px_0_#065f46] active:shadow-[0_0px_0_#065f46] active:translate-y-[5px] transition-all flex items-center justify-center gap-2 mt-2">
+            🎰 GIRAR
+        </button>
+    </main>
+
+    <footer class="mt-4 text-xs text-slate-500 text-center max-w-sm">
+        Circule pelos centros acadêmicos e escaneie os QR Codes para desbloquear mascotes e bônus maiores!
+    </footer>
+
+    <!-- MÓDULOS JAVASCRIPT EM ORDEM DE DEPENDÊNCIA -->
+    <script src="mascots-config.js"></script>
+    <script src="auth-store.js"></script>
+    <script src="ranking-service.js"></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
