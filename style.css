@@ -122,9 +122,11 @@ body {
 
 /* Grade do slot e células */
 .grid-cell {
-    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-    box-shadow: inset 0px 4px 6px rgba(0,0,0,0.3);
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: inset 0px 4px 8px rgba(0,0,0,0.6);
     transition: all 0.2s;
+    overflow: hidden;
 }
 
 .spin-anim {

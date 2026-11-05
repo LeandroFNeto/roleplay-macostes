@@ -185,14 +185,29 @@ function initSector() {
     updateUI();
 }
 
-// INICIALIZA A GRADE COM SÍMBOLOS DO SETOR
+// RENDERIZAÇÃO DE CADA CÉLULA (SUPORTA IMAGENS DOS SÍMBOLOS OU EMOJIS)
+function renderCell(cell, symbol) {
+    if (typeof symbol === 'string' && (symbol.endsWith('.png') || symbol.endsWith('.jpg') || symbol.includes('/'))) {
+        cell.innerHTML = `<img src="${symbol}" class="w-full h-full object-cover rounded-xl shadow-md pointer-events-none select-none">`;
+        cell.className = 'grid-cell h-16 sm:h-20 rounded-xl flex items-center justify-center p-0.5 relative z-0 overflow-hidden';
+    } else {
+        cell.innerText = symbol;
+        cell.className = 'grid-cell h-16 sm:h-20 rounded-xl flex items-center justify-center text-4xl sm:text-5xl text-black relative z-0';
+    }
+}
+
+// INICIALIZA A GRADE COM SÍMBOLOS DO SETOR (IMAGENS OU EMOJIS)
 function initGrid() {
     dom.grid.innerHTML = '';
+    const activeSymbols = (currentSector && currentSector.symbolImages && currentSector.symbolImages.length > 0)
+        ? currentSector.symbolImages
+        : (currentSector ? currentSector.symbols : ['🐗']);
+
     for (let i = 0; i < 9; i++) {
         const cell = document.createElement('div');
-        cell.className = 'grid-cell h-16 sm:h-20 rounded-lg flex items-center justify-center text-4xl sm:text-5xl text-black relative z-0';
         cell.id = `cell-${i}`;
-        cell.innerText = currentSector.icon;
+        gridState[i] = activeSymbols[i % activeSymbols.length];
+        renderCell(cell, gridState[i]);
         dom.grid.appendChild(cell);
     }
 }
@@ -302,10 +317,12 @@ async function triggerMascotBuff() {
     dom.mascotCard.classList.remove('card-launching');
 }
 
-// ANIMAÇÃO DOS ROLOS COM SÍMBOLOS DO SETOR ATIVO
+// ANIMAÇÃO DOS ROLOS COM SÍMBOLOS DO SETOR ATIVO (IMAGENS SEGMENTADAS OU EMOJIS)
 async function animateSpin(hasBuff = false) {
     const cells = document.querySelectorAll('.grid-cell');
-    const symbols = currentSector.symbols;
+    const symbols = (currentSector && currentSector.symbolImages && currentSector.symbolImages.length > 0)
+        ? currentSector.symbolImages
+        : currentSector.symbols;
 
     cells.forEach(c => {
         c.classList.remove('win-cell');
@@ -316,7 +333,8 @@ async function animateSpin(hasBuff = false) {
         let spinCount = 0;
         const spinInterval = setInterval(() => {
             for (let i = 0; i < 9; i++) {
-                cells[i].innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                const randSym = symbols[Math.floor(Math.random() * symbols.length)];
+                renderCell(cells[i], randSym);
             }
             spinCount++;
             
@@ -338,7 +356,7 @@ async function animateSpin(hasBuff = false) {
                 }
 
                 for (let i = 0; i < 9; i++) {
-                    cells[i].innerText = gridState[i];
+                    renderCell(cells[i], gridState[i]);
                 }
                 
                 resolve();

@@ -34,6 +34,13 @@ const MASCOTS_CATALOG = {
         icon: '🐝',
         image: 'assets/mascots/enfermagem-abelha.png',
         symbols: ['🐝', '💉', '🩹', '🩺', '🍯'],
+        symbolImages: [
+            'assets/symbols/enfermagem/abelha_ouro.png',
+            'assets/symbols/enfermagem/seringa_dragao.png',
+            'assets/symbols/enfermagem/curativo_imperial.png',
+            'assets/symbols/enfermagem/estetoscopio_jade.png',
+            'assets/symbols/enfermagem/pote_mel_sagrado.png'
+        ],
         baseBonus: 3.0,
         incentiveText: 'Setor de Saúde: Ferrão da Abelha! (+200% bônus especial)',
         theme: {
@@ -112,6 +119,13 @@ const MASCOTS_CATALOG = {
         icon: '🐻',
         image: 'assets/mascots/biologia-urso.png',
         symbols: ['🐻', '🧬', '🔬', '🌿', '🍻'],
+        symbolImages: [
+            'assets/symbols/biologia/urso_imperial.png',
+            'assets/symbols/biologia/dna_celeste.png',
+            'assets/symbols/biologia/microscopio_dragao.png',
+            'assets/symbols/biologia/folhas_cura.png',
+            'assets/symbols/biologia/chopp_etifico.png'
+        ],
         baseBonus: 2.4,
         incentiveText: 'Setor de Biologia: O Urso da Máfia comanda a bancada! (+140% bônus)',
         theme: {
