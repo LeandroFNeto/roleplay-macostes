@@ -93,14 +93,14 @@ function applySectorTheme(sector) {
     const t = sector.theme;
     if (!t) return;
 
-    // Fundo da página com rica ambientação oriental vermelha e reflexo da cor da atlética
-    dom.appBody.style.background = `radial-gradient(circle at 50% 12%, ${t.primary}35 0%, #200407 45%, #080102 90%)`;
+    // Fundo da página exclusivo e diferenciado para cada curso (Javali preto, Abelha amarelo, Burro verde, Galo vermelho, Urso azul)
+    dom.appBody.style.background = t.pageBg || `radial-gradient(circle at 50% 12%, ${t.primary}35 0%, #200407 45%, #080102 90%)`;
 
     // Moldura da Máquina de Slot estilo templo/Fortune Tiger
     dom.machineWrapper.className = `w-full max-w-md machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl ${t.machineGlow || ''}`;
 
-    // Palco do Mascote com brilho dourado e da atlética
-    dom.mascotHeaderArea.style.background = `radial-gradient(circle at 50% 25%, ${t.primary}35 0%, #2b0509 60%, #100102 95%)`;
+    // Palco do Mascote com ambientação na paleta do curso
+    dom.mascotHeaderArea.style.background = t.stageBg || `radial-gradient(circle at 50% 25%, ${t.primary}35 0%, #2b0509 60%, #100102 95%)`;
 
     // Badges superiores
     dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md border border-yellow-400/50 ${t.badgeBg}`;
