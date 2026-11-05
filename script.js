@@ -104,7 +104,7 @@ function applySectorTheme(sector) {
 
     // Badges superiores
     dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md border border-yellow-400/50 ${t.badgeBg}`;
-    dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border ${t.pillBg}`;
+    updateBonusPillUI();
     dom.mascotName.className = `font-black uppercase tracking-tight ${t.titleColor}`;
 
     // Botão de Girar Principal com acabamento jade/ouro oriental
@@ -119,25 +119,100 @@ function applySectorTheme(sector) {
     } else {
         dom.mascotImg.innerHTML = `<span class="text-7xl sm:text-8xl pb-2 drop-shadow-2xl">${sector.icon}</span>`;
     }
+
+    // Atualiza a relíquia e pré-carrega o frame de arremesso para transição instantânea
+    if (dom.relicImg && sector.relicImage) {
+        dom.relicImg.src = sector.relicImage;
+        dom.relicImg.alt = sector.relicName || 'Relíquia Sagrada';
+    }
+    if (sector.throwImage) {
+        const preloader = new Image();
+        preloader.src = sector.throwImage;
+    }
 }
 
-// BARRA SELETORA RÁPIDA NO TOPO
+// SISTEMA DE ROTAÇÃO DE SUPER BÔNUS: EXATAMENTE 2 CURSOS COM MAIOR BÔNUS A CADA 30 MINUTOS
+const BONUS_ROTATION_INTERVAL_MS = 30 * 60 * 1000;
+const BOOSTED_BONUS_VALUE = 3.5;  // +250% Super Bônus para os 2 cursos em destaque
+const STANDARD_BONUS_VALUE = 1.8; // +80% Bônus Padrão para os outros 3 cursos
+let lastKnownCycleIndex = -1;
+
+function getBoostedSectorsState() {
+    const now = Date.now();
+    const cycleIndex = Math.floor(now / BONUS_ROTATION_INTERVAL_MS);
+    const msRemaining = (cycleIndex + 1) * BONUS_ROTATION_INTERVAL_MS - now;
+    
+    const sectorIds = Object.keys(MASCOTS_CATALOG);
+    // Seleção determinística sincronizada pelo relógio para todos os jogadores
+    const firstIdx = Math.abs((cycleIndex * 9301 + 49297) % 233280) % sectorIds.length;
+    let secondIdx = Math.abs(((cycleIndex + 1) * 9301 + 49297) % 233280) % sectorIds.length;
+    if (secondIdx === firstIdx) {
+        secondIdx = (firstIdx + 1) % sectorIds.length;
+    }
+    
+    const boostedIds = [sectorIds[firstIdx], sectorIds[secondIdx]];
+    const min = Math.floor(msRemaining / 60000);
+    const sec = Math.floor((msRemaining % 60000) / 1000);
+    const timeFormatted = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    
+    return {
+        cycleIndex,
+        boostedIds,
+        msRemaining,
+        timeFormatted
+    };
+}
+
+function getSectorCurrentBonus(sector) {
+    if (!sector) return STANDARD_BONUS_VALUE;
+    const { boostedIds } = getBoostedSectorsState();
+    return boostedIds.includes(sector.id) ? BOOSTED_BONUS_VALUE : STANDARD_BONUS_VALUE;
+}
+
+function updateBonusPillUI() {
+    if (!currentSector || !dom.sectorPill) return;
+    const { boostedIds, timeFormatted } = getBoostedSectorsState();
+    const isBoosted = boostedIds.includes(currentSector.id);
+    const bonus = getSectorCurrentBonus(currentSector);
+    const bonusPercent = Math.round((bonus - 1) * 100);
+
+    if (isBoosted) {
+        dom.sectorPill.innerHTML = `🔥 SUPER BÔNUS +${bonusPercent}% <span class="opacity-90 text-[10px] ml-1 font-mono">⏱️ ${timeFormatted}</span>`;
+        dom.sectorPill.className = `text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-lg shadow-lg border border-yellow-300 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 text-white animate-pulse flex items-center justify-center gap-1`;
+    } else {
+        dom.sectorPill.innerHTML = `+${bonusPercent}% Bônus <span class="opacity-75 text-[10px] ml-1 font-mono">⏱️ ${timeFormatted}</span>`;
+        dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border ${currentSector.theme?.pillBg || 'bg-slate-900 text-yellow-300 border-slate-700'} flex items-center justify-center gap-1`;
+    }
+}
+
+// BARRA SELETORA RÁPIDA NO TOPO (COM DESTAQUE VISUAL DOS 2 CURSOS COM MAIOR BÔNUS)
 function renderMascotQuickBar() {
     dom.mascotQuickBar.innerHTML = '';
+    const { boostedIds } = getBoostedSectorsState();
+
     Object.values(MASCOTS_CATALOG).forEach(sec => {
         const isActive = sec.id === currentSector.id;
+        const isBoosted = boostedIds.includes(sec.id);
         const btn = document.createElement('button');
-        btn.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
-            isActive 
-                ? 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 border-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.7)] scale-105 font-black' 
-                : 'bg-[#280508]/90 text-yellow-200/80 border-amber-900/60 hover:text-white hover:border-yellow-400/60'
-        }`;
+        
+        let bgClass = 'bg-[#280508]/90 text-yellow-200/80 border-amber-900/60 hover:text-white hover:border-yellow-400/60';
+        if (isActive) {
+            bgClass = 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 border-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.7)] scale-105 font-black';
+        } else if (isBoosted) {
+            bgClass = 'bg-red-950/90 text-yellow-300 border-yellow-500/80 shadow-[0_0_10px_rgba(234,179,8,0.35)]';
+        }
+
+        btn.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${bgClass}`;
         
         const thumb = sec.image 
-            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover border border-yellow-400/80">` 
+            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover border ${isBoosted ? 'border-yellow-400 ring-1 ring-red-500' : 'border-yellow-400/80'}">` 
             : `<span>${sec.icon}</span>`;
 
-        btn.innerHTML = `${thumb} <span>${sec.mascotName.split(' ')[0]}</span>`;
+        const boostBadge = isBoosted 
+            ? `<span class="bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow animate-pulse">🔥 3.5x</span>` 
+            : `<span class="opacity-60 text-[10px]">1.8x</span>`;
+
+        btn.innerHTML = `${thumb} <span>${sec.mascotName.split(' ')[0]}</span> ${boostBadge}`;
         btn.addEventListener('click', () => switchSector(sec.id));
         dom.mascotQuickBar.appendChild(btn);
     });
@@ -154,7 +229,7 @@ function switchSector(sectorId) {
 
     // Atualiza textos
     dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
-    dom.sectorPill.innerText = `+${Math.round((currentSector.baseBonus - 1) * 100)}% Bônus`;
+    updateBonusPillUI();
     dom.sectorDesc.innerText = currentSector.incentiveText;
     dom.mascotName.innerText = currentSector.mascotName;
     
@@ -162,8 +237,8 @@ function switchSector(sectorId) {
     applySectorTheme(currentSector);
     renderMascotQuickBar();
 
-    // Multiplicador base inicial do setor
-    multiplier = currentSector.baseBonus;
+    // Multiplicador do setor com rotação dos 2 maiores a cada 30min
+    multiplier = getSectorCurrentBonus(currentSector);
     updateUI();
     initGrid();
     showMessage(`Atlética ativa: ${currentSector.athleticName}!`, 'bg-slate-800', currentSector.theme.titleColor);
@@ -176,14 +251,14 @@ function initSector() {
     currentSector = getSectorConfig(param);
 
     dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
-    dom.sectorPill.innerText = `+${Math.round((currentSector.baseBonus - 1) * 100)}% Bônus`;
+    updateBonusPillUI();
     dom.sectorDesc.innerText = currentSector.incentiveText;
     dom.mascotName.innerText = currentSector.mascotName;
     
     applySectorTheme(currentSector);
     renderMascotQuickBar();
 
-    multiplier = currentSector.baseBonus;
+    multiplier = getSectorCurrentBonus(currentSector);
     updateUI();
 }
 
@@ -287,6 +362,12 @@ async function triggerMascotBuff() {
         dom.relicImg.alt = currentSector.relicName || 'Relíquia Sagrada';
     }
 
+    // Troca para sprite de arremesso durante o lançamento
+    const mascotImgElem = dom.mascotImg.querySelector('img');
+    if (mascotImgElem && currentSector.throwImage) {
+        mascotImgElem.src = currentSector.throwImage;
+    }
+
     // Movimento do mascote lançando o objeto
     dom.mascotImg.classList.add('mascot-throw');
     dom.mascotRelicWrap.classList.add('relic-launching');
@@ -315,6 +396,9 @@ async function triggerMascotBuff() {
     await delay(650);
     dom.grid.classList.remove('grid-impact-flash');
 
+    if (mascotImgElem && currentSector.image) {
+        mascotImgElem.src = currentSector.image;
+    }
     dom.mascotImg.classList.remove('mascot-throw');
     dom.mascotRelicWrap.classList.remove('relic-launching');
 }
@@ -422,7 +506,7 @@ async function playNormalSpin() {
         highlightWins(winningLines);
         const linesCount = winningLines.length;
         
-        const sectorMult = currentSector.baseBonus || 1;
+        const sectorMult = getSectorCurrentBonus(currentSector);
         const cardMult = activeMascotMultiplier > 1 ? activeMascotMultiplier : 1;
         const finalSpinMultiplier = sectorMult * cardMult;
 
@@ -498,7 +582,7 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
     }
 
     dom.bonusAlert.classList.add('hidden');
-    multiplier = currentSector.baseBonus;
+    multiplier = getSectorCurrentBonus(currentSector);
     updateUI();
     
     applySectorTheme(currentSector);
@@ -605,11 +689,38 @@ dom.openQrcodesBtn.addEventListener('click', () => {
 });
 dom.closeQrcodesBtn.addEventListener('click', () => dom.qrcodesModal.classList.add('hidden'));
 
+// INICIALIZAÇÃO DA ROTAÇÃO AUTOMÁTICA DE 30 MINUTOS
+function initBonusRotation() {
+    const { cycleIndex } = getBoostedSectorsState();
+    lastKnownCycleIndex = cycleIndex;
+
+    setInterval(() => {
+        const state = getBoostedSectorsState();
+        updateBonusPillUI();
+
+        // Quando virar a janela de 30 minutos
+        if (state.cycleIndex !== lastKnownCycleIndex) {
+            lastKnownCycleIndex = state.cycleIndex;
+            const sec1 = MASCOTS_CATALOG[state.boostedIds[0]];
+            const sec2 = MASCOTS_CATALOG[state.boostedIds[1]];
+            
+            renderMascotQuickBar();
+            multiplier = getSectorCurrentBonus(currentSector);
+            updateUI();
+
+            const n1 = sec1 ? (sec1.athleticName || sec1.mascotName) : state.boostedIds[0];
+            const n2 = sec2 ? (sec2.athleticName || sec2.mascotName) : state.boostedIds[1];
+            showMessage(`⚡ ROTAÇÃO DE 30 MIN: ${n1} e ${n2} receberam o MAIOR BÔNUS (+250%)!`, "bg-amber-900/95", "text-yellow-300");
+        }
+    }, 1000);
+}
+
 // INICIALIZAÇÃO
 initAuth();
 initSector();
 initGrid();
 updateBetUI();
+initBonusRotation();
 dom.spinBtn.addEventListener('click', playNormalSpin);
 
 // Sincronização periódica do Ranking (a cada 30 segundos)

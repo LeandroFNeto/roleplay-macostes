@@ -103,15 +103,16 @@ body::before {
 .mascot-character-container {
     position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 15;
+    left: 0;
+    right: 0;
     width: 100%;
     height: 215px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
     pointer-events: none;
+    z-index: 15;
+    margin: 0 auto;
 }
 
 .mascot-waist-cut {
@@ -119,9 +120,11 @@ body::before {
     max-height: 210px;
     width: auto;
     object-fit: contain;
-    object-position: bottom;
+    object-position: bottom center;
+    margin: 0 auto;
     filter: drop-shadow(0 12px 30px rgba(0,0,0,0.9));
     transform-origin: bottom center;
+    display: block;
 }
 
 /* Balcão dourado e rubi estilo imperial que corta a cintura e conecta aos rolos */
@@ -164,6 +167,7 @@ body::before {
 /* Animação Idle Breathing (respiração suave) */
 .mascot-breathe {
     animation: idleBreathe 3s ease-in-out infinite;
+    transform-origin: bottom center;
 }
 
 @keyframes idleBreathe {
@@ -174,6 +178,7 @@ body::before {
 /* Animação do Mascote arremessando a carta */
 .mascot-throw {
     animation: mascotThrowMotion 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-origin: bottom center;
 }
 
 @keyframes mascotThrowMotion {

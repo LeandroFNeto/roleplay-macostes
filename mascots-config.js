@@ -18,7 +18,7 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.0,
         incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)',
-        relicImage: 'assets/relics/xicara_java.png',
+        relicImage: 'assets/animations/xicara_relic.png',
         relicName: 'Xícara Sagrada de Java',
         relicActionText: 'O Javali lançou a Xícara de Java fumegante!',
         theme: {
@@ -45,7 +45,8 @@ const MASCOTS_CATALOG = {
         athleticName: 'A.A.A. XXI de Julho',
         mascotName: 'Abelha Rainha',
         icon: '🐝',
-        image: 'assets/mascots/enfermagem-abelha.png',
+        image: 'assets/animations/abelha_buff.png',
+        throwImage: 'assets/animations/abelha_throw.png',
         symbols: ['🐝', '💉', '🩹', '🩺', '🍯'],
         symbolImages: [
             'assets/symbols/enfermagem/abelha_ouro.png',
@@ -83,7 +84,8 @@ const MASCOTS_CATALOG = {
         athleticName: 'A.A.A. Coice de Burro',
         mascotName: 'Coice de Burro',
         icon: '🫏',
-        image: 'assets/mascots/veterinaria-burro.png',
+        image: 'assets/animations/burro_buff.png',
+        throwImage: 'assets/animations/burro_throw.png',
         symbols: ['🫏', '🐴', '🌾', '🐾', '🩺'],
         symbolImages: [
             'assets/symbols/veterinaria/burro_realeza.png',
@@ -94,7 +96,7 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.5,
         incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)',
-        relicImage: 'assets/relics/ferradura_ouro.png',
+        relicImage: 'assets/animations/ferradura_relic.png',
         relicName: 'Ferradura Dourada da Vitória',
         relicActionText: 'O Burro arremessou a Ferradura Dourada!',
         theme: {
@@ -121,7 +123,8 @@ const MASCOTS_CATALOG = {
         athleticName: 'A.A.A. Rabo de Galo',
         mascotName: 'Galo Rabo de Galo',
         icon: '🐓',
-        image: 'assets/mascots/agronomia-galo.png',
+        image: 'assets/animations/galo_buff.png',
+        throwImage: 'assets/animations/galo_throw.png',
         symbols: ['🐓', '🌾', '🚜', '🍺', '🌽'],
         symbolImages: [
             'assets/symbols/agronomia/galo_imperial.png',
@@ -159,7 +162,8 @@ const MASCOTS_CATALOG = {
         athleticName: 'A.A.A. Máfia Etílica',
         mascotName: 'Urso da Máfia',
         icon: '🐻',
-        image: 'assets/mascots/biologia-urso.png',
+        image: 'assets/animations/urso_buff.png',
+        throwImage: 'assets/animations/urso_throw.png',
         symbols: ['🐻', '🧬', '🔬', '🌿', '🍻'],
         symbolImages: [
             'assets/symbols/biologia/urso_imperial.png',
