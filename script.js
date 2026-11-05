@@ -294,8 +294,8 @@ async function triggerMascotBuff() {
     const actionText = currentSector.relicActionText || `O ${currentSector.mascotName} lançou o objeto sagrado!`;
     showMessage(`✨ ${actionText} Bônus ${activeMascotMultiplier}x!`, "bg-amber-900/90", "text-yellow-300");
     
-    // Tempo até a relíquia atingir o meio do painel 3x3
-    await delay(1150);
+    // Tempo exato até a relíquia atingir o meio do painel 3x3 na frente de tudo
+    await delay(1250);
     
     // Efeito de explosão de luz divina e ondas de choque no centro da grade 3x3
     if (dom.gridImpactBurst) {
@@ -312,7 +312,7 @@ async function triggerMascotBuff() {
         setTimeout(() => centerCell.classList.remove('win-cell'), 1200);
     }
     
-    await delay(500);
+    await delay(650);
     dom.grid.classList.remove('grid-impact-flash');
 
     dom.mascotImg.classList.remove('mascot-throw');

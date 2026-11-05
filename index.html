@@ -136,14 +136,6 @@
             <div id="sector-mascot-img" class="mascot-character-container mascot-breathe">
                 <!-- Imagem recortada na cintura preenchida via JS -->
             </div>
-
-            <!-- RELÍQUIA SAGRADA 3D DO MASCOTE (LANÇADA NO CENTRO DO PAINEL) -->
-            <div id="mascot-relic-wrap" class="mascot-relic-wrap">
-                <div id="relic-item" class="relic-item">
-                    <img id="relic-img" src="assets/relics/xicara_java.png" alt="Relíquia Sagrada">
-                    <div class="relic-aura"></div>
-                </div>
-            </div>
         </header>
 
         <!-- BALCÃO DOURADO QUE ENCAIXA DIRETAMENTE NO TOPO DOS ROLOS -->
@@ -151,6 +143,22 @@
             <span id="stage-balcony-text" class="stage-balcony-text flex items-center gap-1.5">
                 🏛️ <span id="sector-mascot-name">Javali Ja-Vali</span> • <span id="sector-incentive-desc">Força bruta do Ja-Vali!</span>
             </span>
+        </div>
+
+        <!-- RELÍQUIA SAGRADA 3D DO MASCOTE (NA FRENTE DE TUDO NA TELA) -->
+        <div id="mascot-relic-wrap" class="mascot-relic-wrap">
+            <div id="relic-item" class="relic-item">
+                <img id="relic-img" src="assets/relics/xicara_java.png" alt="Relíquia Sagrada">
+                <div class="relic-aura"></div>
+            </div>
+        </div>
+
+        <!-- EFEITO DE EXPLOSÃO DE LUZ NO CENTRO DO PAINEL 3X3 (NA FRENTE DOS ROLOS) -->
+        <div id="grid-impact-burst" class="relic-light-burst pointer-events-none">
+            <div class="divine-beam"></div>
+            <div class="shockwave-ring"></div>
+            <div class="shockwave-ring-outer"></div>
+            <div class="starburst-flash"></div>
         </div>
 
         <!-- MEIO: GRADE DO JOGO 3x3 (LOGO ABAIXO DO BALCÃO DO MASCOTE COM MOLDURA ORNAMENTAL IDÊNTICA AOS SÍMBOLOS) -->
@@ -161,14 +169,6 @@
                 <div class="ornament-corner top-right"></div>
                 <div class="ornament-corner bottom-left"></div>
                 <div class="ornament-corner bottom-right"></div>
-
-                <!-- EFEITO DE EXPLOSÃO DE LUZ NO CENTRO DO PAINEL 3X3 -->
-                <div id="grid-impact-burst" class="relic-light-burst pointer-events-none">
-                    <div class="divine-beam"></div>
-                    <div class="shockwave-ring"></div>
-                    <div class="shockwave-ring-outer"></div>
-                    <div class="starburst-flash"></div>
-                </div>
 
                 <div class="grid grid-cols-3 gap-2 sm:gap-2.5 relative z-10" id="slot-grid">
                     <!-- Preenchido via JS -->
