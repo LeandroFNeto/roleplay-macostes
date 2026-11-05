@@ -6,7 +6,8 @@ const MASCOTS_CATALOG = {
         athleticName: 'A.A.A.J.V. Ja-Vali',
         mascotName: 'Javali Ja-Vali',
         icon: '🐗',
-        image: 'assets/mascots/computacao-javali.png',
+        image: 'assets/animations/javali_buff.png',
+        throwImage: 'assets/animations/javali_throw.png',
         symbols: ['🐗', '💻', '⚡', '⌨️', '🚀'],
         symbolImages: [
             'assets/symbols/computacao/javali_dragao.png',
