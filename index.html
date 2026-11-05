@@ -96,7 +96,7 @@
             </div>
             <div class="flex gap-1.5">
                 <button id="test-card-btn" class="bg-gradient-to-r from-amber-600 to-yellow-600 hover:brightness-110 text-white border border-yellow-300/60 px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow text-xs">
-                    🃏 Carta
+                    ✨ Relíquia
                 </button>
                 <button id="open-ranking-btn" class="bg-[#240407] hover:bg-[#38070b] text-yellow-300 border border-amber-800 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow text-xs">
                     🏆 Ranking
@@ -137,20 +137,11 @@
                 <!-- Imagem recortada na cintura preenchida via JS -->
             </div>
 
-            <!-- CARTA COLECIONÁVEL 3D ANIMADA DO MASCOTE -->
-            <div id="mascot-card" class="tcg-card-wrap">
-                <div id="tcg-card-inner" class="tcg-card">
-                    <div class="w-full flex justify-between items-center text-[9px] font-black tracking-wider text-yellow-300">
-                        <span id="tcg-card-header">UENP</span>
-                        <span id="tcg-card-icon">🃏</span>
-                    </div>
-                    <div class="my-auto flex flex-col items-center">
-                        <img id="tcg-card-art" src="" alt="Carta Mascote" class="w-14 h-14 rounded-full object-cover border-2 border-yellow-400 shadow-md mb-1 bg-black">
-                        <span id="tcg-card-name" class="text-[10px] font-black text-center text-white uppercase max-w-[110px] truncate">Mascote</span>
-                    </div>
-                    <div class="w-full text-center bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black rounded-lg py-1 text-xs shadow-md">
-                        <span id="tcg-card-buff">BUFF 3x</span>
-                    </div>
+            <!-- RELÍQUIA SAGRADA 3D DO MASCOTE (LANÇADA NO CENTRO DO PAINEL) -->
+            <div id="mascot-relic-wrap" class="mascot-relic-wrap">
+                <div id="relic-item" class="relic-item">
+                    <img id="relic-img" src="assets/relics/xicara_java.png" alt="Relíquia Sagrada">
+                    <div class="relic-aura"></div>
                 </div>
             </div>
         </header>
@@ -164,14 +155,22 @@
 
         <!-- MEIO: GRADE DO JOGO 3x3 (LOGO ABAIXO DO BALCÃO DO MASCOTE COM MOLDURA ORNAMENTAL IDÊNTICA AOS SÍMBOLOS) -->
         <div class="px-3.5 sm:px-4 pt-2.5 pb-2">
-            <section class="slot-reel-housing p-2.5 sm:p-3 relative" aria-label="Grade de Rolos">
+            <section class="slot-reel-housing p-2.5 sm:p-3 relative overflow-hidden" aria-label="Grade de Rolos">
                 <!-- Ornamentos de Canto nos 4 lados idênticos aos símbolos -->
                 <div class="ornament-corner top-left"></div>
                 <div class="ornament-corner top-right"></div>
                 <div class="ornament-corner bottom-left"></div>
                 <div class="ornament-corner bottom-right"></div>
 
-                <div class="grid grid-cols-3 gap-2 sm:gap-2.5" id="slot-grid">
+                <!-- EFEITO DE EXPLOSÃO DE LUZ NO CENTRO DO PAINEL 3X3 -->
+                <div id="grid-impact-burst" class="relic-light-burst pointer-events-none">
+                    <div class="divine-beam"></div>
+                    <div class="shockwave-ring"></div>
+                    <div class="shockwave-ring-outer"></div>
+                    <div class="starburst-flash"></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 sm:gap-2.5 relative z-10" id="slot-grid">
                     <!-- Preenchido via JS -->
                 </div>
             </section>

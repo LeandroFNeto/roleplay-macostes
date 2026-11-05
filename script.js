@@ -32,7 +32,9 @@ const dom = {
     sectorBadge: document.getElementById('sector-badge'),
     sectorPill: document.getElementById('sector-incentive-pill'),
     sectorDesc: document.getElementById('sector-incentive-desc'),
-    mascotCard: document.getElementById('mascot-card'),
+    mascotRelicWrap: document.getElementById('mascot-relic-wrap'),
+    relicImg: document.getElementById('relic-img'),
+    gridImpactBurst: document.getElementById('grid-impact-burst'),
     mascotQuickBar: document.getElementById('mascot-quick-bar'),
     username: document.getElementById('ui-username'),
     logoutBtn: document.getElementById('logout-btn'),
@@ -274,45 +276,47 @@ function lockControls(lock) {
     }
 }
 
-// ANIMAÇÃO DO MASCOTE SOLTANDO A CARTA COLECIONÁVEL 3D
+// ANIMAÇÃO DO MASCOTE LANÇANDO A RELÍQUIA SAGRADA COM IMPACTO DE LUZ NO CENTRO DO PAINEL 3X3
 async function triggerMascotBuff() {
     const buffOptions = [2, 3, 5];
     activeMascotMultiplier = buffOptions[Math.floor(Math.random() * buffOptions.length)];
     
-    // Atualiza arte e dados da carta TCG
-    const cardArt = document.getElementById('tcg-card-art');
-    const cardName = document.getElementById('tcg-card-name');
-    const cardBuff = document.getElementById('tcg-card-buff');
-    const cardHeader = document.getElementById('tcg-card-header');
-    const cardIcon = document.getElementById('tcg-card-icon');
-    const tcgCardInner = document.getElementById('tcg-card-inner');
-
-    if (currentSector.image && cardArt) {
-        cardArt.src = currentSector.image;
-    }
-    if (cardName) cardName.innerText = currentSector.mascotName;
-    if (cardBuff) cardBuff.innerText = `BÔNUS ${activeMascotMultiplier}x`;
-    if (cardHeader) cardHeader.innerText = currentSector.athleticName || 'UENP';
-    if (cardIcon) cardIcon.innerText = currentSector.icon;
-
-    if (tcgCardInner && currentSector.theme) {
-        tcgCardInner.style.borderColor = currentSector.theme.primary;
-        tcgCardInner.style.boxShadow = `0 0 40px ${currentSector.theme.primary}, 0 20px 40px rgba(0,0,0,0.9)`;
+    // Atualiza a imagem da relíquia do mascote ativo
+    if (dom.relicImg && currentSector.relicImage) {
+        dom.relicImg.src = currentSector.relicImage;
+        dom.relicImg.alt = currentSector.relicName || 'Relíquia Sagrada';
     }
 
+    // Movimento do mascote lançando o objeto
     dom.mascotImg.classList.add('mascot-throw');
-    dom.mascotCard.classList.add('card-launching');
+    dom.mascotRelicWrap.classList.add('relic-launching');
     
-    showMessage(`🔥 O ${currentSector.mascotName} soltou a Carta! Bônus de ${activeMascotMultiplier}x ativado!`, "bg-yellow-600", "text-white");
+    const actionText = currentSector.relicActionText || `O ${currentSector.mascotName} lançou o objeto sagrado!`;
+    showMessage(`✨ ${actionText} Bônus ${activeMascotMultiplier}x!`, "bg-amber-900/90", "text-yellow-300");
     
-    // Tempo até a carta descer e colidir nos rolos
-    await delay(1200);
+    // Tempo até a relíquia atingir o meio do painel 3x3
+    await delay(1150);
+    
+    // Efeito de explosão de luz divina e ondas de choque no centro da grade 3x3
+    if (dom.gridImpactBurst) {
+        dom.gridImpactBurst.classList.remove('active-burst');
+        void dom.gridImpactBurst.offsetWidth; // Trigger reflow
+        dom.gridImpactBurst.classList.add('active-burst');
+    }
     dom.grid.classList.add('grid-impact-flash');
-    await delay(400);
+
+    // Destaca temporariamente a célula central (meio da grade) com brilho divino
+    const centerCell = document.getElementById('cell-4');
+    if (centerCell) {
+        centerCell.classList.add('win-cell');
+        setTimeout(() => centerCell.classList.remove('win-cell'), 1200);
+    }
+    
+    await delay(500);
     dom.grid.classList.remove('grid-impact-flash');
 
     dom.mascotImg.classList.remove('mascot-throw');
-    dom.mascotCard.classList.remove('card-launching');
+    dom.mascotRelicWrap.classList.remove('relic-launching');
 }
 
 // ANIMAÇÃO DOS ROLOS COM SÍMBOLOS DO SETOR ATIVO (IMAGENS SEGMENTADAS OU EMOJIS)

@@ -17,6 +17,9 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.0,
         incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)',
+        relicImage: 'assets/relics/xicara_java.png',
+        relicName: 'Xícara Sagrada de Java',
+        relicActionText: 'O Javali lançou a Xícara de Java fumegante!',
         theme: {
             primary: '#dc2626',
             accent: '#ef4444',
@@ -50,6 +53,9 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 3.0,
         incentiveText: 'Setor de Saúde: Ferrão da Abelha! (+200% bônus especial)',
+        relicImage: 'assets/relics/seringa_jade.png',
+        relicName: 'Seringa Imperial de Jade',
+        relicActionText: 'A Abelha disparou a Seringa de Jade!',
         theme: {
             primary: '#eab308',
             accent: '#facc15',
@@ -83,6 +89,9 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.5,
         incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)',
+        relicImage: 'assets/relics/ferradura_ouro.png',
+        relicName: 'Ferradura Dourada da Vitória',
+        relicActionText: 'O Burro arremessou a Ferradura Dourada!',
         theme: {
             primary: '#16a34a',
             accent: '#22c55e',
@@ -116,6 +125,9 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.2,
         incentiveText: 'Setor do Campo & Agro: Canto do Galo Campeão! (+120% bônus)',
+        relicImage: 'assets/relics/milho_sagrado.png',
+        relicName: 'Milho Dourado Sagrado',
+        relicActionText: 'O Galo lançou o Milho Dourado Sagrado!',
         theme: {
             primary: '#e11d48',
             accent: '#f43f5e',
@@ -149,6 +161,9 @@ const MASCOTS_CATALOG = {
         ],
         baseBonus: 2.4,
         incentiveText: 'Setor de Biologia: O Urso da Máfia comanda a bancada! (+140% bônus)',
+        relicImage: 'assets/relics/peixe_carpa.png',
+        relicName: 'Carpa Dourada Celestial',
+        relicActionText: 'O Urso lançou a Carpa Dourada das Águas!',
         theme: {
             primary: '#ea580c',
             accent: '#f97316',
