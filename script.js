@@ -86,41 +86,36 @@ dom.logoutBtn.addEventListener('click', () => {
     dom.loginModal.classList.remove('hidden');
 });
 
-// APLICA O TEMA VISUAL EXCLUSIVO DA ATLÉTICA
+// APLICA O TEMA VISUAL EXCLUSIVO DA ATLÉTICA ESTILO FORTUNE TIGER
 function applySectorTheme(sector) {
     const t = sector.theme;
     if (!t) return;
 
     // Fundo da página sutil com gradiente temático
-    dom.appBody.style.background = `radial-gradient(circle at 50% 10%, ${t.primary}18 0%, #030712 70%)`;
+    dom.appBody.style.background = `radial-gradient(circle at 50% 10%, ${t.primary}20 0%, #030712 70%)`;
 
     // Moldura da Máquina de Slot
-    dom.machineWrapper.className = `w-full max-w-lg machine-container rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col gap-4 relative border-2 ${t.machineBorder} ${t.machineGlow}`;
+    dom.machineWrapper.className = `w-full max-w-lg machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl border-2 ${t.machineBorder} ${t.machineGlow}`;
 
-    // Cabeçalho do Mascote
-    dom.mascotHeaderArea.className = `mascot-area rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center relative shadow-xl overflow-hidden border-2 ${t.headerBorder} ${t.headerBg} ${t.headerGlow}`;
+    // Palco do Mascote
+    dom.mascotHeaderArea.style.background = `radial-gradient(circle at 50% 30%, ${t.primary}30 0%, #090d16 85%)`;
 
     // Badges superiores
-    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md ${t.badgeBg}`;
-    dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-1 rounded-lg shadow-md border ${t.pillBg}`;
-    dom.mascotName.className = `text-xl sm:text-2xl font-black uppercase tracking-tight text-center relative z-10 mt-1 drop-shadow-md ${t.titleColor}`;
+    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md ${t.badgeBg}`;
+    dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border ${t.pillBg}`;
+    dom.mascotName.className = `font-black uppercase tracking-tight ${t.titleColor}`;
 
     // Botão de Girar Principal
     dom.spinBtn.className = `w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg ${t.spinBtnClass}`;
 
-    // Imagem Hero Grande em Destaque no Topo
+    // Imagem do Mascote Cortada na Cintura (Fortune Tiger Style)
     if (sector.image) {
         dom.mascotImg.innerHTML = `
-            <div class="relative group cursor-pointer">
-                <img src="${sector.image}" alt="${sector.mascotName}" 
-                    class="mascot-hero-img h-28 w-28 sm:h-32 sm:w-32 object-contain rounded-full border-4 bg-slate-950/80 p-1.5 ${t.avatarGlow}">
-                <div class="absolute -bottom-1 -right-1 bg-slate-900 border border-slate-700 text-xs px-1.5 py-0.5 rounded-full shadow">
-                    ${sector.icon}
-                </div>
-            </div>
+            <img src="${sector.image}" alt="${sector.mascotName}" 
+                class="mascot-waist-cut">
         `;
     } else {
-        dom.mascotImg.innerHTML = `<span class="text-7xl sm:text-8xl drop-shadow-2xl">${sector.icon}</span>`;
+        dom.mascotImg.innerHTML = `<span class="text-7xl sm:text-8xl pb-2 drop-shadow-2xl">${sector.icon}</span>`;
     }
 }
 
