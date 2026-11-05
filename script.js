@@ -86,27 +86,27 @@ dom.logoutBtn.addEventListener('click', () => {
     dom.loginModal.classList.remove('hidden');
 });
 
-// APLICA O TEMA VISUAL EXCLUSIVO DA ATLÉTICA ESTILO FORTUNE TIGER
+// APLICA O TEMA VISUAL EXCLUSIVO DA ATLÉTICA ESTILO FORTUNE TIGER ORIENTAL
 function applySectorTheme(sector) {
     const t = sector.theme;
     if (!t) return;
 
-    // Fundo da página sutil com gradiente temático
-    dom.appBody.style.background = `radial-gradient(circle at 50% 10%, ${t.primary}20 0%, #030712 70%)`;
+    // Fundo da página com rica ambientação oriental vermelha e reflexo da cor da atlética
+    dom.appBody.style.background = `radial-gradient(circle at 50% 12%, ${t.primary}35 0%, #200407 45%, #080102 90%)`;
 
-    // Moldura da Máquina de Slot
-    dom.machineWrapper.className = `w-full max-w-lg machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl border-2 ${t.machineBorder} ${t.machineGlow}`;
+    // Moldura da Máquina de Slot estilo templo/Fortune Tiger
+    dom.machineWrapper.className = `w-full max-w-md machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl ${t.machineGlow || ''}`;
 
-    // Palco do Mascote
-    dom.mascotHeaderArea.style.background = `radial-gradient(circle at 50% 30%, ${t.primary}30 0%, #090d16 85%)`;
+    // Palco do Mascote com brilho dourado e da atlética
+    dom.mascotHeaderArea.style.background = `radial-gradient(circle at 50% 25%, ${t.primary}35 0%, #2b0509 60%, #100102 95%)`;
 
     // Badges superiores
-    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md ${t.badgeBg}`;
+    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md border border-yellow-400/50 ${t.badgeBg}`;
     dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border ${t.pillBg}`;
     dom.mascotName.className = `font-black uppercase tracking-tight ${t.titleColor}`;
 
-    // Botão de Girar Principal
-    dom.spinBtn.className = `w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg ${t.spinBtnClass}`;
+    // Botão de Girar Principal com acabamento jade/ouro oriental
+    dom.spinBtn.className = `w-full spin-btn-ornamental font-black text-2xl sm:text-3xl py-3.5 sm:py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg`;
 
     // Imagem do Mascote Cortada na Cintura (Fortune Tiger Style)
     if (sector.image) {
@@ -127,12 +127,12 @@ function renderMascotQuickBar() {
         const btn = document.createElement('button');
         btn.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
             isActive 
-                ? 'bg-slate-800 text-white border-yellow-400 shadow-[0_0_12px_rgba(234,179,8,0.5)] scale-105' 
-                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                ? 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 border-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.7)] scale-105 font-black' 
+                : 'bg-[#280508]/90 text-yellow-200/80 border-amber-900/60 hover:text-white hover:border-yellow-400/60'
         }`;
         
         const thumb = sec.image 
-            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover">` 
+            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover border border-yellow-400/80">` 
             : `<span>${sec.icon}</span>`;
 
         btn.innerHTML = `${thumb} <span>${sec.mascotName.split(' ')[0]}</span>`;
@@ -217,11 +217,9 @@ function updateBetUI() {
     dom.betBtns.forEach(btn => {
         const betVal = parseInt(btn.dataset.bet);
         if (betVal === currentBet) {
-            btn.classList.add('bg-yellow-400', 'text-slate-950', 'border-yellow-600', 'shadow-inner');
-            btn.classList.remove('bg-slate-800', 'text-white', 'border-slate-950');
+            btn.classList.add('active-bet');
         } else {
-            btn.classList.remove('bg-yellow-400', 'text-slate-950', 'border-yellow-600', 'shadow-inner');
-            btn.classList.add('bg-slate-800', 'text-white', 'border-slate-950');
+            btn.classList.remove('active-bet');
         }
     });
 }
@@ -249,19 +247,19 @@ function updateUI() {
     }
     
     if (multiplier > 1) {
-        dom.multiBox.classList.add('border-yellow-500', 'bg-yellow-950/40');
-        dom.multiLabel.classList.replace('text-slate-400', 'text-yellow-400');
-        dom.multiplier.classList.replace('text-slate-300', 'text-yellow-400');
+        dom.multiBox.classList.add('border-yellow-400', 'shadow-[0_0_15px_rgba(250,204,21,0.4)]');
+        dom.multiLabel.className = 'text-[10px] uppercase font-black tracking-wider mb-0.5 text-yellow-300';
+        dom.multiplier.className = 'text-xl sm:text-2xl font-black text-yellow-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]';
     } else {
-        dom.multiBox.classList.remove('border-yellow-500', 'bg-yellow-950/40');
-        dom.multiLabel.classList.replace('text-yellow-400', 'text-slate-400');
-        dom.multiplier.classList.replace('text-yellow-400', 'text-slate-300');
+        dom.multiBox.classList.remove('border-yellow-400', 'shadow-[0_0_15px_rgba(250,204,21,0.4)]');
+        dom.multiLabel.className = 'text-[10px] uppercase font-black tracking-wider mb-0.5 text-yellow-300/80';
+        dom.multiplier.className = 'text-xl sm:text-2xl font-black text-yellow-400';
     }
 }
 
-function showMessage(text, bgClass = 'bg-slate-800', textClass = 'text-white') {
+function showMessage(text, bgClass = '', textClass = '') {
     dom.msgBox.innerText = text;
-    dom.msgBox.className = `h-12 sm:h-14 flex items-center justify-center text-center text-sm font-bold rounded-xl transition-colors duration-300 border border-slate-700 px-2 ${bgClass} ${textClass}`;
+    dom.msgBox.className = `ornamental-message-box h-10 sm:h-11 flex items-center justify-center text-center text-xs sm:text-sm font-black rounded-xl transition-colors duration-300 px-2 ${bgClass} ${textClass}`;
 }
 
 function lockControls(lock) {
@@ -516,8 +514,8 @@ function renderRanking(list) {
         const row = document.createElement('div');
         row.className = `flex items-center justify-between p-2.5 rounded-xl border transition-all ${
             isMe 
-                ? 'bg-yellow-950/60 border-yellow-500 text-yellow-300 font-bold' 
-                : 'bg-slate-800/80 border-slate-700 text-slate-200'
+                ? 'bg-gradient-to-r from-amber-900/60 to-yellow-900/40 border-yellow-400 text-yellow-300 font-black shadow-[0_0_12px_rgba(250,204,21,0.35)]' 
+                : 'bg-[#240407]/90 border-amber-900/50 text-yellow-100/90'
         }`;
 
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
@@ -527,14 +525,14 @@ function renderRanking(list) {
                 <span class="w-6 text-center font-black">${medal}</span>
                 <span class="text-xl">${item.icon || '🎓'}</span>
                 <div>
-                    <div class="font-bold flex items-center gap-1">
-                        ${item.nickname} ${isMe ? '<span class="text-[9px] bg-yellow-500 text-slate-950 px-1 rounded font-black">VOCÊ</span>' : ''}
+                    <div class="font-bold flex items-center gap-1 text-yellow-200">
+                        ${item.nickname} ${isMe ? '<span class="text-[9px] bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 px-1 rounded font-black">VOCÊ</span>' : ''}
                     </div>
-                    <div class="text-[10px] text-slate-400">${item.sector || 'Geral'}</div>
+                    <div class="text-[10px] text-yellow-300/60">${item.sector || 'Geral'}</div>
                 </div>
             </div>
-            <div class="font-black text-right text-green-400">
-                ${item.score.toLocaleString()} <span class="text-[10px] text-slate-400">pts</span>
+            <div class="font-black text-right text-amber-300">
+                ${item.score.toLocaleString()} <span class="text-[10px] text-yellow-300/60">pts</span>
             </div>
         `;
         dom.rankingList.appendChild(row);
@@ -556,23 +554,23 @@ function renderQrCodesModal() {
             : `<span class="text-xl">${sector.icon}</span>`;
 
         const card = document.createElement('div');
-        card.className = 'p-3 bg-slate-800 rounded-2xl border border-slate-700 flex flex-col sm:flex-row items-center gap-3';
+        card.className = 'p-3 bg-[#240407]/90 rounded-2xl border border-amber-900/60 flex flex-col sm:flex-row items-center gap-3 shadow-md';
         card.innerHTML = `
-            <img src="${qrImgUrl}" alt="QR Code ${sector.sectorName}" class="w-24 h-24 rounded-lg bg-white p-1 shadow-md">
+            <img src="${qrImgUrl}" alt="QR Code ${sector.sectorName}" class="w-24 h-24 rounded-lg bg-white p-1 shadow-md border-2 border-yellow-500/50">
             <div class="flex-1 text-center sm:text-left">
                 <div class="flex items-center justify-center sm:justify-start gap-2">
                     ${mascotBadge}
                     <div>
-                        <h4 class="font-black text-white text-sm">${sector.athleticName || sector.sectorName}</h4>
-                        <p class="text-[10px] text-slate-400">${sector.sectorName}</p>
+                        <h4 class="font-black text-yellow-300 text-sm">${sector.athleticName || sector.sectorName}</h4>
+                        <p class="text-[10px] text-yellow-200/60">${sector.sectorName}</p>
                     </div>
                 </div>
                 <p class="text-[11px] font-semibold my-1 ${sector.theme.titleColor}">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
                 <div class="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                    <button onclick="switchSector('${sector.id}'); dom.qrcodesModal.classList.add('hidden');" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[11px]">
+                    <button onclick="switchSector('${sector.id}'); dom.qrcodesModal.classList.add('hidden');" class="bg-gradient-to-r from-emerald-600 to-green-700 hover:brightness-110 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow">
                         Jogar nesta Atlética
                     </button>
-                    <button onclick="navigator.clipboard.writeText('${targetUrl}'); alert('Link copiado!');" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-lg text-[11px]">
+                    <button onclick="navigator.clipboard.writeText('${targetUrl}'); alert('Link copiado!');" class="bg-[#3b080d] hover:bg-[#4d0c12] text-yellow-200 px-3 py-1 rounded-lg text-[11px] border border-amber-800">
                         Copiar Link
                     </button>
                 </div>
