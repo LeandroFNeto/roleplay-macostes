@@ -9,53 +9,50 @@ body {
 }
 
 .machine-container {
-    background: linear-gradient(165deg, #1e293b, #090d16 85%);
-    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.9);
-    border: 3px solid #334155;
+    background: linear-gradient(170deg, #1e293b, #090d16 85%);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.95);
+    border: 2px solid #334155;
     transition: all 0.4s ease;
 }
 
-/* Palco / Templo do Mascote no Topo */
+/* PALCO DO MASCOTE NA PARTE SUPERIOR */
 .mascot-stage {
     position: relative;
     width: 100%;
-    min-height: 220px;
-    height: 240px;
-    border-radius: 20px 20px 0 0;
+    height: 250px;
+    min-height: 250px;
+    border-radius: 24px 24px 0 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    background: radial-gradient(circle at 50% 20%, #334155 0%, #090d16 90%);
-    border-bottom: none;
-    box-shadow: inset 0 -20px 30px rgba(0,0,0,0.8);
+    background: radial-gradient(circle at 50% 25%, #334155 0%, #090d16 95%);
+    box-shadow: inset 0 -15px 25px rgba(0,0,0,0.7);
 }
 
-/* Telhado / Arco do Palco */
-.stage-roof {
+/* Faixa superior de badges */
+.stage-top-banner {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 48px;
-    background: linear-gradient(180deg, rgba(234, 179, 8, 0.35) 0%, rgba(15, 23, 42, 0.9) 100%);
-    border-bottom: 2px solid rgba(234, 179, 8, 0.6);
+    top: 8px;
+    left: 12px;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 14px;
-    z-index: 25;
+    z-index: 30;
+    pointer-events: none;
 }
 
-/* Mascote cortado na cintura no topo da grade */
+/* Mascote centralizado da cintura para cima */
 .mascot-character-container {
     position: absolute;
-    bottom: -6px; /* Encaixa rente ao balcão */
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
     z-index: 15;
     width: 100%;
+    height: 215px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -63,27 +60,28 @@ body {
 }
 
 .mascot-waist-cut {
-    max-height: 195px;
+    height: 210px;
+    max-height: 210px;
     width: auto;
     object-fit: contain;
     object-position: bottom;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.85));
     transform-origin: bottom center;
 }
 
-/* Balcão dourado / divisor que corta o mascote na cintura */
+/* Balcão divisor que corta a cintura e conecta aos rolos */
 .stage-balcony {
     width: 100%;
-    height: 24px;
-    background: linear-gradient(90deg, #b45309, #facc15, #b45309);
+    height: 26px;
+    background: linear-gradient(90deg, #b45309, #facc15 50%, #b45309);
     border-top: 2px solid #fef08a;
     border-bottom: 2px solid #78350f;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8), 0 0 15px rgba(250, 204, 21, 0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8), 0 0 15px rgba(250, 204, 21, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    z-index: 20;
+    z-index: 25;
 }
 
 .stage-balcony-text {
@@ -91,18 +89,22 @@ body {
     font-weight: 900;
     color: #451a03;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    max-width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Animação Idle Breathing (respiração do Fortune Tiger) */
+/* Animação Idle Breathing (respiração suave) */
 .mascot-breathe {
     animation: idleBreathe 3s ease-in-out infinite;
 }
 
 @keyframes idleBreathe {
     0%, 100% { transform: scale(1) translateY(0); }
-    50% { transform: scale(1.025) translateY(-5px); }
+    50% { transform: scale(1.025) translateY(-6px); }
 }
 
 /* Animação do Mascote arremessando a carta */
@@ -112,8 +114,8 @@ body {
 
 @keyframes mascotThrowMotion {
     0% { transform: scale(1) translateY(0) rotate(0deg); }
-    25% { transform: scale(0.94) translateY(6px) rotate(-6deg); }
-    45% { transform: scale(1.15) translateY(-14px) rotate(4deg); filter: drop-shadow(0 0 25px rgba(234,179,8,0.9)); }
+    25% { transform: scale(0.93) translateY(8px) rotate(-6deg); }
+    45% { transform: scale(1.15) translateY(-16px) rotate(4deg); filter: drop-shadow(0 0 30px rgba(234,179,8,0.9)); }
     75% { transform: scale(1.04) translateY(-4px) rotate(0deg); }
     100% { transform: scale(1) translateY(0) rotate(0deg); }
 }
@@ -200,29 +202,29 @@ body {
 
 @keyframes launchCardTcg {
     0% {
-        transform: translate(-50%, -100px) scale(0.1) rotateY(0deg) rotateZ(0deg);
+        transform: translate(-50%, -80px) scale(0.1) rotateY(0deg) rotateZ(0deg);
         opacity: 0;
     }
     15% {
-        transform: translate(-50%, -140px) scale(1.1) rotateY(360deg) rotateZ(-12deg);
+        transform: translate(-50%, -120px) scale(1.1) rotateY(360deg) rotateZ(-12deg);
         opacity: 1;
     }
     45% {
-        transform: translate(-50%, -30px) scale(1.3) rotateY(720deg) rotateZ(8deg);
+        transform: translate(-50%, -10px) scale(1.3) rotateY(720deg) rotateZ(8deg);
         opacity: 1;
         filter: brightness(1.2) drop-shadow(0 0 40px #facc15);
     }
     75% {
-        transform: translate(-50%, 140px) scale(1.15) rotateY(1080deg) rotateZ(-4deg);
+        transform: translate(-50%, 150px) scale(1.15) rotateY(1080deg) rotateZ(-4deg);
         opacity: 1;
     }
     90% {
-        transform: translate(-50%, 190px) scale(1.4) rotateY(1440deg) rotateZ(0deg);
+        transform: translate(-50%, 200px) scale(1.4) rotateY(1440deg) rotateZ(0deg);
         opacity: 1;
         filter: brightness(1.5) drop-shadow(0 0 60px #22c55e);
     }
     100% {
-        transform: translate(-50%, 200px) scale(0) rotateY(1800deg) rotateZ(45deg);
+        transform: translate(-50%, 220px) scale(0) rotateY(1800deg) rotateZ(45deg);
         opacity: 0;
     }
 }

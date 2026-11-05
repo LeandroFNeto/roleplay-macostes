@@ -86,7 +86,7 @@
     </div>
 
     <!-- SELETOR RÁPIDO DE ATLÉTICAS / MASCOTES NO TOPO -->
-    <div class="w-full max-w-lg mb-2 flex flex-col gap-1.5 px-1">
+    <div class="w-full max-w-md mb-2 flex flex-col gap-1.5 px-1">
         <div class="flex items-center justify-between text-xs">
             <div class="flex items-center gap-2">
                 <span class="bg-slate-800/80 text-yellow-400 px-2.5 py-1 rounded-lg border border-slate-700 font-bold flex items-center gap-1 shadow">
@@ -114,22 +114,22 @@
     </div>
 
     <!-- MÁQUINA DE SLOT ESTILO FORTUNE TIGER -->
-    <main id="machine-wrapper" class="w-full max-w-lg machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
+    <main id="machine-wrapper" class="w-full max-w-md machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
         
-        <!-- PÓRTICO / PALCO DO MASCOTE DEBRUÇADO NA CINTURA -->
+        <!-- PARTE SUPERIOR: PALCO DO MASCOTE DEBRUÇADO NA CINTURA -->
         <header id="mascot-header-area" class="mascot-stage relative">
             
-            <!-- Telhado decorativo com badges -->
-            <div class="stage-roof">
-                <span id="sector-badge" class="text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md">
+            <!-- Faixa superior com nome da atlética e multiplicador -->
+            <div class="stage-top-banner">
+                <span id="sector-badge" class="text-[11px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md">
                     Ciência da Computação
                 </span>
-                <span id="sector-incentive-pill" class="text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border">
+                <span id="sector-incentive-pill" class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border">
                     +100% Bônus
                 </span>
             </div>
 
-            <!-- MASCOTE EM TAMANHO GRANDE CORTADO NA CINTURA -->
+            <!-- MASCOTE EM DESTAQUE NO TOPO (CORTADO NA CINTURA) -->
             <div id="sector-mascot-img" class="mascot-character-container mascot-breathe">
                 <!-- Imagem recortada na cintura preenchida via JS -->
             </div>
@@ -152,26 +152,25 @@
             </div>
         </header>
 
-        <!-- BALCÃO DIVISOR QUE CORTA A CINTURA DO MASCOTE -->
+        <!-- BALCÃO DOURADO QUE ENCAIXA DIRETAMENTE NO TOPO DOS ROLOS -->
         <div id="stage-balcony" class="stage-balcony">
             <span id="stage-balcony-text" class="stage-balcony-text flex items-center gap-1.5">
                 🏛️ <span id="sector-mascot-name">Javali Ja-Vali</span> • <span id="sector-incentive-desc">Força bruta do Ja-Vali!</span>
             </span>
         </div>
 
-        <div class="p-4 sm:p-6 flex flex-col gap-4">
-            <!-- PAINEL DE STATUS -->
-            <section class="grid grid-cols-2 gap-3 text-center" aria-label="Status do Jogador">
-                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-xl border border-slate-700 shadow-inner">
-                    <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1">Saldo de Pontos</p>
-                    <p id="ui-saldo" class="text-xl sm:text-2xl font-black text-green-400">5000</p>
-                </div>
-                <div id="multiplier-box" class="bg-slate-900/90 p-2 sm:p-3 rounded-xl border border-slate-700 shadow-inner transition-all duration-300">
-                    <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-1" id="ui-multi-label">Multiplicador da Atlética</p>
-                    <p id="ui-multiplier" class="text-xl sm:text-2xl font-black text-yellow-400">2.0x</p>
+        <!-- MEIO: GRADE DO JOGO 3x3 (LOGO ABAIXO DO BALCÃO DO MASCOTE) -->
+        <div class="px-4 pt-3 pb-2">
+            <section class="bg-slate-900/95 p-3 rounded-2xl border-4 border-slate-700/80 shadow-2xl relative" aria-label="Grade de Rolos">
+                <div class="grid grid-cols-3 gap-2 sm:gap-2.5" id="slot-grid">
+                    <!-- Preenchido via JS -->
                 </div>
             </section>
+        </div>
 
+        <!-- PARTE INFERIOR: PONTUAÇÃO LEVADA PARA BAIXO (ESTILO FORTUNE TIGER) -->
+        <div class="px-4 pb-4 flex flex-col gap-3">
+            
             <!-- ALERTA DE RODADAS DO BÔNUS -->
             <div id="bonus-alert" class="hidden bg-gradient-to-r from-green-600 to-emerald-600 p-2 rounded-xl text-center border-2 border-green-400 shadow-[0_0_15px_rgba(52,211,153,0.5)] animate-pulse">
                 <p class="text-sm font-black text-white uppercase tracking-widest">
@@ -179,31 +178,36 @@
                 </p>
             </div>
 
-            <!-- GRADE DO JOGO 3x3 -->
-            <section class="bg-slate-900/95 p-3 sm:p-4 rounded-2xl border-4 border-slate-700/80 shadow-2xl relative" aria-label="Grade de Rolos">
-                <div class="grid grid-cols-3 gap-2 sm:gap-3" id="slot-grid">
-                    <!-- Preenchido via JS -->
+            <!-- PAINEL DE PONTUAÇÃO (ABAIXO DA GRADE) -->
+            <section class="grid grid-cols-2 gap-2 text-center" aria-label="Status do Jogador">
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-700 shadow-inner">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold mb-0.5">Saldo de Pontos</p>
+                    <p id="ui-saldo" class="text-lg sm:text-xl font-black text-green-400">5000</p>
+                </div>
+                <div id="multiplier-box" class="bg-slate-900/90 p-2 rounded-xl border border-slate-700 shadow-inner transition-all duration-300">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold mb-0.5" id="ui-multi-label">Multiplicador da Atlética</p>
+                    <p id="ui-multiplier" class="text-lg sm:text-xl font-black text-yellow-400">2.0x</p>
                 </div>
             </section>
 
             <!-- OPÇÕES DE APOSTA -->
             <section aria-label="Configuração de Aposta">
-                <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-bold mb-2 text-center">Sua Aposta</p>
-                <div class="grid grid-cols-4 gap-2" id="bet-options">
-                    <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="50">50</button>
-                    <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="100">100</button>
-                    <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="200">200</button>
-                    <button class="bet-btn bg-slate-800 text-white font-bold py-3 sm:py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm sm:text-base hover:bg-slate-700" data-bet="500">500</button>
+                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1 text-center">Sua Aposta</p>
+                <div class="grid grid-cols-4 gap-1.5" id="bet-options">
+                    <button class="bet-btn bg-slate-800 text-white font-bold py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm hover:bg-slate-700" data-bet="50">50</button>
+                    <button class="bet-btn bg-slate-800 text-white font-bold py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm hover:bg-slate-700" data-bet="100">100</button>
+                    <button class="bet-btn bg-slate-800 text-white font-bold py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm hover:bg-slate-700" data-bet="200">200</button>
+                    <button class="bet-btn bg-slate-800 text-white font-bold py-2 rounded-lg border-b-4 border-slate-950 transition-all text-sm hover:bg-slate-700" data-bet="500">500</button>
                 </div>
             </section>
 
             <!-- CAIXA DE MENSAGEM -->
-            <div id="message-box" class="h-12 sm:h-14 flex items-center justify-center text-center text-sm font-bold rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700 transition-colors">
+            <div id="message-box" class="h-10 sm:h-11 flex items-center justify-center text-center text-xs sm:text-sm font-bold rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700 transition-colors">
                 Escolha sua aposta para começar!
             </div>
 
             <!-- BOTÃO PRINCIPAL COM COR DINÂMICA DO MASCOTE -->
-            <button id="spin-btn" class="w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg">
+            <button id="spin-btn" class="w-full font-black text-2xl py-3.5 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 shadow-lg">
                 🎰 GIRAR
             </button>
         </div>
