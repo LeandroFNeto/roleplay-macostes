@@ -1,4 +1,4 @@
-// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos com Temas Visuais Exclusivos
+// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos com Símbolos Oficiais Segmentados
 const MASCOTS_CATALOG = {
     'computacao': {
         id: 'computacao',
@@ -8,6 +8,13 @@ const MASCOTS_CATALOG = {
         icon: '🐗',
         image: 'assets/mascots/computacao-javali.png',
         symbols: ['🐗', '💻', '⚡', '⌨️', '🚀'],
+        symbolImages: [
+            'assets/symbols/computacao/javali_dragao.png',
+            'assets/symbols/computacao/notebook_jade.png',
+            'assets/symbols/computacao/raio_celeste.png',
+            'assets/symbols/computacao/teclado_mecanico.png',
+            'assets/symbols/computacao/foguete_imperial.png'
+        ],
         baseBonus: 2.0,
         incentiveText: 'Setor de Computação: Força bruta do Ja-Vali! (+100% bônus)',
         theme: {
@@ -67,6 +74,13 @@ const MASCOTS_CATALOG = {
         icon: '🫏',
         image: 'assets/mascots/veterinaria-burro.png',
         symbols: ['🫏', '🐴', '🌾', '🐾', '🩺'],
+        symbolImages: [
+            'assets/symbols/veterinaria/burro_realeza.png',
+            'assets/symbols/veterinaria/cavalo_nobre.png',
+            'assets/symbols/veterinaria/trigo_ouro.png',
+            'assets/symbols/veterinaria/pata_jade.png',
+            'assets/symbols/veterinaria/estetoscopio_escudo.png'
+        ],
         baseBonus: 2.5,
         incentiveText: 'Setor Veterinário: O Coice da Vitória! (+150% bônus)',
         theme: {
@@ -93,6 +107,13 @@ const MASCOTS_CATALOG = {
         icon: '🐓',
         image: 'assets/mascots/agronomia-galo.png',
         symbols: ['🐓', '🌾', '🚜', '🍺', '🌽'],
+        symbolImages: [
+            'assets/symbols/agronomia/galo_imperial.png',
+            'assets/symbols/agronomia/trigo_laco.png',
+            'assets/symbols/agronomia/trator_dourado.png',
+            'assets/symbols/agronomia/chopp_campo.png',
+            'assets/symbols/agronomia/milho_sagrado.png'
+        ],
         baseBonus: 2.2,
         incentiveText: 'Setor do Campo & Agro: Canto do Galo Campeão! (+120% bônus)',
         theme: {

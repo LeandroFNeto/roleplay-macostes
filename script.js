@@ -185,14 +185,14 @@ function initSector() {
     updateUI();
 }
 
-// RENDERIZAÇÃO DE CADA CÉLULA (SUPORTA IMAGENS DOS SÍMBOLOS OU EMOJIS)
+// RENDERIZAÇÃO DE CADA CÉLULA (QUADRADO PERFEITO COM IMAGEM INTEIRA)
 function renderCell(cell, symbol) {
     if (typeof symbol === 'string' && (symbol.endsWith('.png') || symbol.endsWith('.jpg') || symbol.includes('/'))) {
-        cell.innerHTML = `<img src="${symbol}" class="w-full h-full object-cover rounded-xl shadow-md pointer-events-none select-none">`;
-        cell.className = 'grid-cell h-16 sm:h-20 rounded-xl flex items-center justify-center p-0.5 relative z-0 overflow-hidden';
+        cell.innerHTML = `<img src="${symbol}" alt="Símbolo" class="w-full h-full object-contain rounded-xl select-none pointer-events-none drop-shadow-md">`;
+        cell.className = 'grid-cell aspect-square w-full rounded-xl flex items-center justify-center p-0 relative z-0 overflow-hidden';
     } else {
         cell.innerText = symbol;
-        cell.className = 'grid-cell h-16 sm:h-20 rounded-xl flex items-center justify-center text-4xl sm:text-5xl text-black relative z-0';
+        cell.className = 'grid-cell aspect-square w-full rounded-xl flex items-center justify-center text-4xl sm:text-5xl text-black relative z-0 bg-slate-100';
     }
 }
 
