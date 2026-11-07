@@ -32,6 +32,11 @@ for (const [id, exp] of Object.entries(expected)) {
     errors++;
   }
 
+  if (m.bgImage && !fs.existsSync(m.bgImage)) {
+    console.error(`[FAIL] Background não encontrado: ${m.bgImage}`);
+    errors++;
+  }
+
   if (!fs.existsSync(m.relicImage)) {
     console.error(`[FAIL] Relíquia não encontrada: ${m.relicImage}`);
     errors++;

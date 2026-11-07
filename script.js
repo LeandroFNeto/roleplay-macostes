@@ -97,18 +97,25 @@ function applySectorTheme(sector) {
     dom.appBody.style.background = t.pageBg || `radial-gradient(circle at 50% 12%, ${t.primary}35 0%, #200407 45%, #080102 90%)`;
 
     // Moldura da Máquina de Slot estilo templo/Fortune Tiger
-    dom.machineWrapper.className = `w-full max-w-md machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl ${t.machineGlow || ''}`;
+    dom.machineWrapper.className = `w-full max-w-md md:max-w-lg machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl ${t.machineGlow || ''}`;
 
-    // Palco do Mascote com ambientação na paleta do curso
-    dom.mascotHeaderArea.style.background = t.stageBg || `radial-gradient(circle at 50% 25%, ${t.primary}35 0%, #2b0509 60%, #100102 95%)`;
+    // Palco do Mascote com imagem do campus/setor de fundo ancorada de baixo para cima
+    if (sector.bgImage) {
+        dom.mascotHeaderArea.style.backgroundImage = `linear-gradient(180deg, rgba(12,2,4,0.1) 0%, rgba(20,4,7,0.15) 55%, rgba(12,2,4,0.65) 100%), url('${sector.bgImage}')`;
+        dom.mascotHeaderArea.style.backgroundSize = sector.bgSize || 'cover';
+        dom.mascotHeaderArea.style.backgroundPosition = sector.bgPosition || 'center bottom';
+        dom.mascotHeaderArea.style.backgroundRepeat = 'no-repeat';
+    } else {
+        dom.mascotHeaderArea.style.backgroundImage = 'none';
+        dom.mascotHeaderArea.style.background = t.stageBg || `radial-gradient(circle at 50% 25%, ${t.primary}35 0%, #2b0509 60%, #100102 95%)`;
+    }
 
-    // Badges superiores
-    dom.sectorBadge.className = `text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-0.5 rounded-full shadow-md border border-yellow-400/50 ${t.badgeBg}`;
+    // Identificação no balcão dourado e pílula de bônus
+    dom.sectorBadge.className = 'stage-balcony-text font-black text-[10px] sm:text-[11px] uppercase truncate';
     updateBonusPillUI();
-    dom.mascotName.className = `font-black uppercase tracking-tight ${t.titleColor}`;
 
     // Botão de Girar Principal com acabamento jade/ouro oriental
-    dom.spinBtn.className = `w-full spin-btn-ornamental font-black text-2xl sm:text-3xl py-3.5 sm:py-4 rounded-2xl active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mt-1 shadow-lg`;
+    dom.spinBtn.className = `w-full spin-btn-ornamental font-black text-lg sm:text-2xl py-2 sm:py-3.5 rounded-xl sm:rounded-2xl active:translate-y-[3px] active:shadow-none transition-all flex items-center justify-center gap-2 shadow-lg`;
 
     // Imagem do Mascote Cortada na Cintura (Fortune Tiger Style)
     if (sector.image) {
@@ -177,11 +184,11 @@ function updateBonusPillUI() {
     const bonusPercent = Math.round((bonus - 1) * 100);
 
     if (isBoosted) {
-        dom.sectorPill.innerHTML = `🔥 SUPER BÔNUS +${bonusPercent}% <span class="opacity-90 text-[10px] ml-1 font-mono">⏱️ ${timeFormatted}</span>`;
-        dom.sectorPill.className = `text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-lg shadow-lg border border-yellow-300 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 text-white animate-pulse flex items-center justify-center gap-1`;
+        dom.sectorPill.innerHTML = `🔥 +${bonusPercent}% <span class="opacity-90 text-[9px] ml-0.5 font-mono">⏱️${timeFormatted}</span>`;
+        dom.sectorPill.className = `text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-md border border-amber-900/60 bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 text-white animate-pulse flex items-center justify-center whitespace-nowrap`;
     } else {
-        dom.sectorPill.innerHTML = `+${bonusPercent}% Bônus <span class="opacity-75 text-[10px] ml-1 font-mono">⏱️ ${timeFormatted}</span>`;
-        dom.sectorPill.className = `text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-lg shadow-md border ${currentSector.theme?.pillBg || 'bg-slate-900 text-yellow-300 border-slate-700'} flex items-center justify-center gap-1`;
+        dom.sectorPill.innerHTML = `+${bonusPercent}% <span class="opacity-80 text-[9px] ml-0.5 font-mono">⏱️${timeFormatted}</span>`;
+        dom.sectorPill.className = `text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm border border-amber-900/40 bg-[#3a060a]/90 text-yellow-300 flex items-center justify-center whitespace-nowrap`;
     }
 }
 
@@ -325,18 +332,18 @@ function updateUI() {
     
     if (multiplier > 1) {
         dom.multiBox.classList.add('border-yellow-400', 'shadow-[0_0_15px_rgba(250,204,21,0.4)]');
-        dom.multiLabel.className = 'text-[10px] uppercase font-black tracking-wider mb-0.5 text-yellow-300';
-        dom.multiplier.className = 'text-xl sm:text-2xl font-black text-yellow-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.8)]';
+        dom.multiLabel.className = 'text-[9px] sm:text-[10px] uppercase font-black tracking-wider text-yellow-300';
+        dom.multiplier.className = 'text-sm sm:text-xl font-black text-yellow-300 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]';
     } else {
         dom.multiBox.classList.remove('border-yellow-400', 'shadow-[0_0_15px_rgba(250,204,21,0.4)]');
-        dom.multiLabel.className = 'text-[10px] uppercase font-black tracking-wider mb-0.5 text-yellow-300/80';
-        dom.multiplier.className = 'text-xl sm:text-2xl font-black text-yellow-400';
+        dom.multiLabel.className = 'text-[9px] sm:text-[10px] uppercase font-black tracking-wider text-yellow-300/80';
+        dom.multiplier.className = 'text-sm sm:text-xl font-black text-yellow-400';
     }
 }
 
 function showMessage(text, bgClass = '', textClass = '') {
     dom.msgBox.innerText = text;
-    dom.msgBox.className = `ornamental-message-box h-10 sm:h-11 flex items-center justify-center text-center text-xs sm:text-sm font-black rounded-xl transition-colors duration-300 px-2 ${bgClass} ${textClass}`;
+    dom.msgBox.className = `ornamental-message-box h-7 sm:h-9 flex items-center justify-center text-center text-[11px] sm:text-xs font-black rounded-lg transition-colors duration-300 px-2 leading-tight ${bgClass} ${textClass}`;
 }
 
 function lockControls(lock) {
@@ -593,9 +600,10 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
 // RENDERIZAÇÃO E ATUALIZAÇÃO DO RANKING
 function renderRanking(list) {
     dom.rankingList.innerHTML = '';
+    const items = (list && list.length > 0) ? list : RankingService.getRanking(currentUser, currentSector);
     let myPosition = null;
 
-    list.forEach((item, index) => {
+    items.forEach((item, index) => {
         const isMe = currentUser && currentUser.nickname.toLowerCase() === item.nickname.toLowerCase();
         if (isMe) myPosition = index + 1;
 
@@ -678,7 +686,8 @@ if (testCardBtn) {
 }
 
 dom.openRankingBtn.addEventListener('click', () => {
-    renderRanking(RankingService.getRanking());
+    renderRanking(RankingService.getRanking(currentUser, currentSector));
+    RankingService.syncWithServer();
     dom.rankingModal.classList.remove('hidden');
 });
 dom.closeRankingBtn.addEventListener('click', () => dom.rankingModal.classList.add('hidden'));

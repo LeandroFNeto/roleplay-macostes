@@ -21,6 +21,9 @@ const MASCOTS_CATALOG = {
         relicImage: 'assets/animations/xicara_relic.png',
         relicName: 'Xícara Sagrada de Java',
         relicActionText: 'O Javali lançou a Xícara de Java fumegante!',
+        bgImage: 'assets/backgrounds/bg_computacao_cct.svg',
+        bgSize: 'cover',
+        bgPosition: 'center bottom',
         theme: {
             pageBg: 'radial-gradient(circle at 50% 12%, rgba(250, 204, 21, 0.15) 0%, #121212 45%, #000000 95%)',
             stageBg: 'radial-gradient(circle at 50% 25%, #2a2a2a 0%, #141414 60%, #050505 95%)',
@@ -60,6 +63,9 @@ const MASCOTS_CATALOG = {
         relicImage: 'assets/relics/seringa_jade.png',
         relicName: 'Seringa Imperial de Jade',
         relicActionText: 'A Abelha disparou a Seringa de Jade!',
+        bgImage: 'assets/backgrounds/bg_enfermagem_clinica.jpg',
+        bgSize: 'cover',
+        bgPosition: 'center bottom',
         theme: {
             pageBg: 'radial-gradient(circle at 50% 12%, rgba(234, 179, 8, 0.5) 0%, #3d2602 45%, #140d00 95%)',
             stageBg: 'radial-gradient(circle at 50% 25%, #633e03 0%, #331f01 60%, #110a00 95%)',
@@ -99,6 +105,9 @@ const MASCOTS_CATALOG = {
         relicImage: 'assets/animations/ferradura_relic.png',
         relicName: 'Ferradura Dourada da Vitória',
         relicActionText: 'O Burro arremessou a Ferradura Dourada!',
+        bgImage: 'assets/backgrounds/bg_veterinaria_vet.jpg',
+        bgSize: 'cover',
+        bgPosition: 'center bottom',
         theme: {
             pageBg: 'radial-gradient(circle at 50% 12%, rgba(22, 163, 74, 0.45) 0%, #032b13 45%, #011207 95%)',
             stageBg: 'radial-gradient(circle at 50% 25%, #054a22 0%, #032e15 60%, #011308 95%)',
@@ -138,6 +147,9 @@ const MASCOTS_CATALOG = {
         relicImage: 'assets/relics/milho_sagrado.png',
         relicName: 'Milho Dourado Sagrado',
         relicActionText: 'O Galo lançou o Milho Dourado Sagrado!',
+        bgImage: 'assets/backgrounds/bg_agronomia_agro.jpg',
+        bgSize: 'cover',
+        bgPosition: 'center bottom',
         theme: {
             pageBg: 'radial-gradient(circle at 50% 12%, rgba(225, 29, 72, 0.45) 0%, #38070e 45%, #130104 95%)',
             stageBg: 'radial-gradient(circle at 50% 25%, #590915 0%, #30040b 60%, #110103 95%)',
@@ -177,6 +189,9 @@ const MASCOTS_CATALOG = {
         relicImage: 'assets/relics/peixe_carpa.png',
         relicName: 'Carpa Dourada Celestial',
         relicActionText: 'O Urso lançou a Carpa Dourada das Águas!',
+        bgImage: 'assets/backgrounds/bg_biologia_bio.jpg',
+        bgSize: 'cover',
+        bgPosition: 'center bottom',
         theme: {
             pageBg: 'radial-gradient(circle at 50% 12%, rgba(37, 99, 235, 0.45) 0%, #081d3d 45%, #020b17 95%)',
             stageBg: 'radial-gradient(circle at 50% 25%, #0f346b 0%, #071f42 60%, #020b17 95%)',

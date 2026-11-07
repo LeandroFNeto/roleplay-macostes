@@ -1,3 +1,15 @@
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Android build and local files
+.gradle/
+build/
+**/build/
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+
+# Application binaries
+*.apk
