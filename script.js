@@ -1,4 +1,4 @@
-﻿// ESTADO DO JOGO
+// ESTADO DO JOGO
 let currentUser = null;
 let currentSector = null;
 let balance = 5000;

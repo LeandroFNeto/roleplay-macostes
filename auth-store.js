@@ -1,4 +1,4 @@
-﻿// Gerenciamento simples de identificação e persistência do jogador
+// Gerenciamento simples de identificação e persistência do jogador
 const AuthStore = {
     STORAGE_KEY: 'tigrinho_active_user',
     USERS_KEY: 'tigrinho_all_users',

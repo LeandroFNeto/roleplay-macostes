@@ -1,4 +1,4 @@
-﻿import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { redis, clean, body } from './_lib.mjs';
 
 const hashPin = (pin, salt) => scryptSync(pin, salt, 32).toString('hex');

@@ -1,4 +1,4 @@
-﻿import { redis, clean, body, getSession } from './_lib.mjs';
+import { redis, clean, body, getSession } from './_lib.mjs';
 
 const KEY = 'ranking:players';
 const ONLINE_MS = 75000; // 2 heartbeats de 30s + folga

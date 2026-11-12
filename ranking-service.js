@@ -1,4 +1,4 @@
-﻿// Serviço de Ranking Global com suporte Offline-First para Sistemas Distribuídos
+// Serviço de Ranking Global com suporte Offline-First para Sistemas Distribuídos
 const RankingService = {
     STORAGE_KEY: 'tigrinho_global_ranking',
     OFFLINE_PENDING_KEY: 'tigrinho_offline_pending_score',
