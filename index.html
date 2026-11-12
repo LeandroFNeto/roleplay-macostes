@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0c0204">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <script src="tailwind.cdn.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -19,11 +21,17 @@
         <div class="ornamental-modal-card w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
             <div class="text-5xl mb-3 drop-shadow-[0_0_15px_#facc15]">🎓</div>
             <h2 class="text-2xl font-black text-yellow-300 mb-2 drop-shadow-md">Desafio das Atléticas</h2>
-            <p class="text-xs text-yellow-100/70 mb-6">Identifique-se para acumular pontos no ranking global dos centros acadêmicos!</p>
+            <p class="text-xs text-yellow-100/70 mb-6">Entre com seu telefone (1 conta por número) para acumular pontos no ranking global dos centros acadêmicos!</p>
             
             <form id="login-form" class="flex flex-col gap-3">
-                <input type="text" id="login-input" placeholder="Seu Apelido ou Matrícula/RA" required maxlength="25"
+                <input type="tel" id="login-phone" placeholder="Telefone com DDD" required maxlength="16" autocomplete="tel"
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <input type="password" id="login-pin" inputmode="numeric" placeholder="PIN (4 a 6 números)" required minlength="4" maxlength="6" pattern="\d{4,6}" autocomplete="current-password"
+                    class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <input type="text" id="login-input" placeholder="Apelido (só no 1º acesso)" maxlength="20"
+                    class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                <p class="text-[10px] text-yellow-100/60 leading-snug">📱 Seu telefone é usado somente para entrar em contato com o vencedor e entregar a premiação. Não será usado para nenhum outro fim.</p>
+                <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
                 <button type="submit" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-[0_4px_0_#78350f] border border-yellow-200 transition-all">
                     ENTRAR E JOGAR
                 </button>
@@ -107,6 +115,9 @@
                 </button>
                 <button id="open-qrcodes-btn" class="bg-[#240407] hover:bg-[#38070b] text-emerald-400 border border-amber-800 px-2 py-1 sm:px-2.5 min-h-[30px] sm:min-h-[36px] rounded-lg font-bold flex items-center gap-1 shadow text-xs active:scale-95 transition-transform">
                     📱 QR Codes
+                </button>
+                <button id="install-btn" hidden class="bg-[#240407] hover:bg-[#38070b] text-sky-300 border border-amber-800 px-2 py-1 sm:px-2.5 min-h-[30px] sm:min-h-[36px] rounded-lg font-bold items-center gap-1 shadow text-xs active:scale-95 transition-transform">
+                    ⬇️ Baixar app
                 </button>
             </div>
         </div>
@@ -235,6 +246,24 @@
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
+
+        // Botao "Baixar app": prompt nativo (Android/Chrome) ou instrucao manual (iOS).
+        (() => {
+            const btn = document.getElementById('install-btn');
+            const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+            if (standalone) return;
+            let deferred = null;
+            const show = () => { btn.hidden = false; btn.classList.add('flex'); };
+            addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; show(); });
+            addEventListener('appinstalled', () => { btn.hidden = true; });
+            if (/iphone|ipad|ipod/i.test(navigator.userAgent)) show();
+            btn.onclick = async () => {
+                if (deferred) { deferred.prompt(); await deferred.userChoice; deferred = null; btn.hidden = true; }
+                else alert('No iPhone: toque em Compartilhar e depois em "Adicionar à Tela de Início".');
+            };
+        })();
     </script>
 </body>
 </html>
+
+

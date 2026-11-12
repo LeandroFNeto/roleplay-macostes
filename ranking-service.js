@@ -1,9 +1,12 @@
-// Serviço de Ranking Global com suporte Offline-First para Sistemas Distribuídos
+﻿// Serviço de Ranking Global com suporte Offline-First para Sistemas Distribuídos
 const RankingService = {
     STORAGE_KEY: 'tigrinho_global_ranking',
     OFFLINE_PENDING_KEY: 'tigrinho_offline_pending_score',
     LAST_SYNC_KEY: 'tigrinho_ranking_last_sync',
-    DEFAULT_API_URL: 'http://localhost:3000/api/ranking',
+    DEFAULT_API_URL: '/api/ranking',
+    onlineCount: 0,
+    getMe: null,
+    onUnauthorized: null,
     REFRESH_INTERVAL_MS: 30000,
     timerId: null,
     onUpdateCallback: null,
@@ -96,15 +99,17 @@ const RankingService = {
         const apiUrl = this.getApiUrl();
 
         try {
-            // 1. Envia pontuação offline acumulada caso exista
+            // 1. Envia pontuação atual (também serve de heartbeat de online) ou a pendente offline
             const pendingRaw = localStorage.getItem(this.OFFLINE_PENDING_KEY);
-            if (pendingRaw) {
-                const pendingScore = JSON.parse(pendingRaw);
+            const me = this.getMe && this.getMe();
+            if (me && me.token) {
+                const pendingScore = me;
                 const postRes = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + me.token },
                     body: JSON.stringify(pendingScore)
                 });
+                if (postRes && postRes.status === 401 && this.onUnauthorized) this.onUnauthorized();
                 if (postRes && postRes.ok) {
                     localStorage.removeItem(this.OFFLINE_PENDING_KEY);
                 }
@@ -117,7 +122,9 @@ const RankingService = {
             });
 
             if (res && res.ok) {
-                const serverList = await res.json();
+                const data = await res.json();
+                const serverList = Array.isArray(data) ? data : data.players;
+                this.onlineCount = data.online || 0;
                 if (Array.isArray(serverList)) {
                     const fakeNames = ['javali_bcc', 'galo_agro', 'abelha_xxi', 'urso_mafia_bio', 'coice_vet', 'bixo_computacao'];
                     const cleanList = serverList.filter(item => !fakeNames.includes((item.nickname || '').toLowerCase()));
@@ -141,7 +148,8 @@ const RankingService = {
     },
 
     // Inicia ouvintes de reconexão automática e sincronização periódica
-    startPeriodicSync(onUpdateCallback) {
+    startPeriodicSync(onUpdateCallback, getMe) {
+        this.getMe = getMe;
         this.onUpdateCallback = onUpdateCallback;
         if (this.timerId) clearInterval(this.timerId);
 
@@ -172,3 +180,6 @@ const RankingService = {
         }, this.REFRESH_INTERVAL_MS);
     }
 };
+
+
+

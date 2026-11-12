@@ -1,4 +1,4 @@
-// ESTADO DO JOGO
+﻿// ESTADO DO JOGO
 let currentUser = null;
 let currentSector = null;
 let balance = 5000;
@@ -57,6 +57,8 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // INICIALIZAÇÃO DE SESSÃO / LOGIN
 function initAuth() {
     currentUser = AuthStore.getCurrentUser();
+    // contas antigas (sem token de telefone) precisam entrar de novo
+    if (currentUser && !currentUser.token) { AuthStore.logout(); currentUser = null; }
     if (!currentUser) {
         dom.loginModal.classList.remove('hidden');
     } else {
@@ -66,20 +68,27 @@ function initAuth() {
     }
 }
 
-dom.loginForm.addEventListener('submit', (e) => {
+dom.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const nickname = dom.loginInput.value;
-    const user = AuthStore.login(nickname);
-    if (user) {
-        currentUser = user;
-        dom.username.innerText = user.nickname;
-        balance = user.balance || 5000;
-        dom.loginModal.classList.add('hidden');
-        updateUI();
-        showMessage(`Bem-vindo, ${user.nickname}! Escolha sua aposta.`, 'bg-emerald-900', 'text-emerald-200');
+    const errEl = document.getElementById('login-error');
+    errEl.classList.add('hidden');
+    const { user, error } = await AuthStore.login(
+        document.getElementById('login-phone').value,
+        document.getElementById('login-pin').value,
+        dom.loginInput.value
+    );
+    if (error) {
+        errEl.innerText = error;
+        errEl.classList.remove('hidden');
+        return;
     }
+    currentUser = user;
+    dom.username.innerText = user.nickname;
+    balance = user.balance || 5000;
+    dom.loginModal.classList.add('hidden');
+    updateUI();
+    showMessage(`Bem-vindo, ${user.nickname}! Escolha sua aposta.`, 'bg-emerald-900', 'text-emerald-200');
 });
-
 dom.logoutBtn.addEventListener('click', () => {
     AuthStore.logout();
     currentUser = null;
@@ -598,6 +607,7 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
 }
 
 // RENDERIZAÇÃO E ATUALIZAÇÃO DO RANKING
+const esc = s => String(s).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';');
 function renderRanking(list) {
     dom.rankingList.innerHTML = '';
     const items = (list && list.length > 0) ? list : RankingService.getRanking(currentUser, currentSector);
@@ -619,12 +629,13 @@ function renderRanking(list) {
         row.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="w-6 text-center font-black">${medal}</span>
-                <span class="text-xl">${item.icon || '🎓'}</span>
+                <span title="${item.online ? 'online' : 'offline'}" class="text-[8px]">${item.online ? '🟢' : '⚪'}</span>
+                <span class="text-xl">${esc(item.icon || '🎓')}</span>
                 <div>
                     <div class="font-bold flex items-center gap-1 text-yellow-200">
-                        ${item.nickname} ${isMe ? '<span class="text-[9px] bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 px-1 rounded font-black">VOCÊ</span>' : ''}
+                        ${esc(item.nickname)} ${isMe ? '<span class="text-[9px] bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 px-1 rounded font-black">VOCÊ</span>' : ''}
                     </div>
-                    <div class="text-[10px] text-yellow-300/60">${item.sector || 'Geral'}</div>
+                    <div class="text-[10px] text-yellow-300/60">${esc(item.sector || 'Geral')}</div>
                 </div>
             </div>
             <div class="font-black text-right text-amber-300">
@@ -634,6 +645,8 @@ function renderRanking(list) {
         dom.rankingList.appendChild(row);
     });
 
+    const syncEl = document.getElementById('ranking-sync-indicator');
+    if (syncEl) syncEl.innerText = `🟢 ${RankingService.onlineCount} online`;
     dom.myRankIndicator.innerText = myPosition ? `Sua posição: #${myPosition}` : 'Sua posição: Fora do top';
 }
 
@@ -652,7 +665,7 @@ function renderQrCodesModal() {
         const card = document.createElement('div');
         card.className = 'p-3 bg-[#240407]/90 rounded-2xl border border-amber-900/60 flex flex-col sm:flex-row items-center gap-3 shadow-md';
         card.innerHTML = `
-            <img src="${qrImgUrl}" alt="QR Code ${sector.sectorName}" class="w-24 h-24 rounded-lg bg-white p-1 shadow-md border-2 border-yellow-500/50">
+            <img src="${qrImgUrl}" alt="QR Code ${sector.sectorName}" onerror="this.style.display='none'" class="w-24 h-24 rounded-lg bg-white p-1 shadow-md border-2 border-yellow-500/50">
             <div class="flex-1 text-center sm:text-left">
                 <div class="flex items-center justify-center sm:justify-start gap-2">
                     ${mascotBadge}
@@ -733,8 +746,12 @@ initBonusRotation();
 dom.spinBtn.addEventListener('click', playNormalSpin);
 
 // Sincronização periódica do Ranking (a cada 30 segundos)
+RankingService.onUnauthorized = () => dom.logoutBtn.click(); // sessão expirada
 RankingService.startPeriodicSync((updatedList) => {
     if (!dom.rankingModal.classList.contains('hidden')) {
         renderRanking(updatedList);
     }
-});
+}, () => currentUser && currentUser.token && { token: currentUser.token, nickname: currentUser.nickname, score: balance, sector: currentSector.sectorName, icon: currentSector.icon });
+
+
+

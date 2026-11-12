@@ -1,4 +1,4 @@
-const CACHE_NAME = 'atleticas-v1';
+﻿const CACHE_NAME = 'atleticas-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,6 +9,9 @@ const ASSETS_TO_CACHE = [
   './mascots-config.js',
   './tailwind.cdn.js',
   './manifest.json',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
+  './assets/icons/icon-maskable-512.png',
   './assets/cards/card-sprite.jpg',
   './assets/mascots/computacao-javali.png',
   './assets/mascots/enfermagem-abelha.png',
@@ -50,8 +53,31 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => response || fetch(event.request).catch(() => caches.match('./index.html')))
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Navegacao: rede primeiro (versao nova), cache como fallback offline.
+  if (req.mode === 'navigate') {
+    event.respondWith(fetch(req).catch(() => caches.match('./index.html')));
+    return;
+  }
+  // Fontes externas: cache em tempo de execucao para funcionar offline apos a 1a visita.
+  if (FONT_HOSTS.includes(url.hostname)) {
+    event.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+      return res;
+    })));
+    return;
+  }
+  // Demais assets do mesmo origin: cache primeiro.
+  if (url.origin === location.origin) {
+    event.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
+  }
 });
+
+
