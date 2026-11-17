@@ -254,3 +254,13 @@ function getSectorConfig(param) {
     const resolvedId = MASCOTS_ALIASES[normalized] || normalized;
     return MASCOTS_CATALOG[resolvedId] || MASCOTS_CATALOG['computacao'];
 }
+
+// Cada mascote tem um endereço próprio; os jogos compartilham a conta e os pontos.
+function getSectorUrl(sectorId) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('setor', getSectorConfig(sectorId).id);
+    if (AppMode.localDemo) url.searchParams.set('demo', '1');
+    return url.href;
+}
