@@ -2,6 +2,26 @@
 const AuthStore = {
     STORAGE_KEY: AppMode.localDemo ? 'tigrinho_demo_active_user' : 'tigrinho_active_user',
     USERS_KEY: AppMode.localDemo ? 'tigrinho_demo_all_users' : 'tigrinho_all_users',
+    GUIDANCE_KEY: AppMode.localDemo ? 'tigrinho_demo_guidance' : 'tigrinho_account_guidance_v1',
+
+    guidanceFor(userId) {
+        try { return JSON.parse(localStorage.getItem(this.GUIDANCE_KEY) || '{}')[userId] || {}; }
+        catch { return {}; }
+    },
+
+    shouldShowGuidance(user) {
+        return !!user?.guidanceRequired && !this.guidanceFor(user.id).seen;
+    },
+
+    markGuidanceSeen(userId, synced = false) {
+        if (!userId) return;
+        let preferences;
+        try { preferences = JSON.parse(localStorage.getItem(this.GUIDANCE_KEY) || '{}'); }
+        catch { preferences = {}; }
+        const previous = preferences[userId] || {};
+        preferences[userId] = { seen: true, pending: synced ? false : previous.pending !== false };
+        localStorage.setItem(this.GUIDANCE_KEY, JSON.stringify(preferences));
+    },
 
     getCurrentUser() {
         const raw = localStorage.getItem(this.STORAGE_KEY);
@@ -42,6 +62,8 @@ const AuthStore = {
         };
         user.nickname = data.nickname;
         user.token = data.token;
+        user.guidanceRequired = data.guidanceRequired === true;
+        if (!user.guidanceRequired) this.markGuidanceSeen(userId, true);
         user.updatedAt = Date.now();
         allUsers[userId] = user;
 

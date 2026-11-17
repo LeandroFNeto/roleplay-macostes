@@ -87,19 +87,60 @@ A aplicação inclui um gerador/visualizador interno de QR Codes para testes e i
 
 Cada link abre o jogo do respectivo mascote. A conta, o saldo e o recorde são compartilhados entre os links no mesmo navegador. Os parâmetros antigos `sector` e `mascote` continuam aceitos.
 
-A barra de seleção foi substituída por um aviso com os links dos dois jogos que estão pagando mais em pontos: bônus de **3,5x**, com rotação a cada **30 minutos**. Os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus.
+Acesse o botão **ⓘ**, no canto superior direito do jogo, para ver as regras, a conexão e os links dos dois jogos com bônus de **3,5x**. A rotação ocorre a cada **30 minutos**; os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus. A relíquia continua sendo ativada automaticamente pelos giros, sem botão de teste manual.
 
-### Desafio de 1 milhão de pontos
+### Premiação: recorde confirmado e meta de 1 bilhão
 
-O login e a tela do jogo avisam para cadastrar corretamente o telefone com DDD. O primeiro jogador autenticado cuja pontuação de **1.000.000 ou mais** for registrada pelo servidor tem seu telefone salvo para contato da organização.
+O primeiro jogador a **atingir ou ultrapassar 1.000.000.000 de pontos confirmados pelo servidor** vence antecipadamente. Se a organização encerrar antes, vence quem tiver o **maior recorde confirmado até o encerramento**, independentemente do saldo atual. Em empate, vence quem confirmou aquele recorde primeiro no servidor. A ordem é dada por uma sequência Redis, inclusive para confirmações no mesmo milissegundo.
 
-- O registro fica na chave privada Redis `prize:first-million`, com telefone, apelido, pontuação, setor e horário de confirmação do servidor.
-- A operação atômica `SET NX` impede que dois jogadores sejam registrados como vencedores. O registro não expira nem é substituído por novos recordes.
-- O ranking público mostra somente apelido, pontuação e horário do vencedor; o telefone não é devolvido pela API.
-- No modo offline, o recorde fica salvo no aparelho e é enviado ao reconectar. A prioridade do prêmio segue a ordem de confirmação no servidor, não o relógio do celular.
-- A pontuação continua sendo calculada pelo cliente, como no restante do projeto. O registro identifica o primeiro envio autenticado, sem validação dos giros no servidor.
+- Fechar uma aba ou aplicativo **não encerra a competição**. Somente a organização pode executar `POST /api/competition` com a ação `close` e seu segredo administrativo.
+- Um único script Lua (`EVAL`) atualiza o máximo pessoal, o recorde elegível e o vencedor no Redis. Envios simultâneos, heartbeats e reenvios não reduzem recordes nem substituem o resultado fechado.
+- Pontos offline recebidos **depois** do encerramento atualizam o ranking geral e o recorde pessoal, mas **não participam do prêmio nem alteram o vencedor**. Vale a confirmação no servidor, sem confiar no relógio do aparelho. A interface conserva a última confirmação disponível offline.
+- Se não houver nenhum recorde elegível, a competição encerra sem vencedor. Não há reabertura automática.
+- A migração é automática e atômica no primeiro acesso à nova API. Preserva `ranking:players` e a chave histórica `prize:first-million`, que deixa de decidir a premiação. Recordes anteriores já confirmados também participam, sem exigir novo login. Como a API antiga não registrava a hora exata do recorde, a migração usa `achievedAt`, quando disponível, ou `updatedAt`; em empate desse horário, usa o identificador privado estável da conta. Na ausência de horários, considera o instante da migração. Se já houver recordes na meta, o primeiro por essa ordem vence na migração. Os novos envios são ordenados pela sequência Redis.
+- A API aceita inteiros de `0` a `Number.MAX_SAFE_INTEGER` (`9.007.199.254.740.991`), incluindo ultrapassar 1 bilhão em uma jogada. Os valores são guardados como strings decimais dentro do JSON Redis para evitar arredondamento do Lua/cjson e retornados como números na API.
+- O telefone fica somente nos dados privados da organização. A API pública usa uma lista explícita de campos permitidos. Como antes, os pontos são calculados pelo cliente: confirmação autenticada não equivale a validação dos giros contra fraude.
 
-Para conferir os assets, o layout e os fluxos: `node test-local.js`, `node test-responsive.js` e `node --test test-game-flows.js test-offline-cache.js`.
+### Orientações e conexão
+
+As orientações abrem automaticamente uma vez para contas criadas nesta versão. A apresentação fica registrada imediatamente por conta no aparelho e é confirmada no Redis no próximo envio autenticado. Recarregar, trocar de mascote e sair/entrar não repetem a orientação. Outros aparelhos respeitam a confirmação do servidor após a sincronização. Se uma apresentação ocorrer offline, a confirmação é enviada ao reconectar; antes disso, outro aparelho ainda pode recebê-la. Contas antigas não são obrigadas a passar pelo aviso novo. O botão **ⓘ** sempre permite consultar novamente.
+
+O indicador compacto de conexão fica fora do painel, na barra do jogo, e distingue **Online**, **Offline**, **Servidor indisponível**, sincronização e sessão expirada. O painel tem rolagem e limite de altura para telas pequenas; quando fechado, não cobre controles. As pendências offline são separadas por conta, inclusive ao trocar de jogador no mesmo aparelho.
+
+### Configuração e encerramento pela organização
+
+Configure `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` (ou os aliases `KV_REST_API_URL` e `KV_REST_API_TOKEN`) no servidor. Configure também `COMPETITION_ADMIN_TOKEN` com um segredo aleatório longo, exclusivo da organização. **Nunca coloque esse segredo nos arquivos do navegador, no APK ou no repositório.**
+
+Para encerrar globalmente, use um terminal da organização, com o mesmo segredo no ambiente:
+
+```powershell
+$env:COMPETITION_ADMIN_TOKEN = 'segredo-configurado-no-servidor'
+node scripts/close-competition.mjs https://endereco-do-jogo.vercel.app
+```
+
+O comando envia `{ "action": "close" }` para `/api/competition` usando `Authorization: Bearer ...`. Encerramentos repetidos retornam o resultado já congelado. Não há segredo administrativo nem botão de encerramento nas telas dos jogadores. Publicar o código não encerra a competição.
+
+### Testes
+
+```powershell
+npm ci
+npm test
+```
+
+Os testes de modelo, API, contas, orientações, sincronização, cache, assets e verificações de responsividade não exigem Redis nem dependências npm. A suíte de integração executa **o script Lua real**, com chaves isoladas e limpeza apenas dessas chaves, quando há um Redis de teste:
+
+```powershell
+$env:REDIS_TEST_URL = 'redis://127.0.0.1:6379'
+npm run test:redis
+```
+
+Ela cobre atingir/ultrapassar 1 bilhão, encerramento pelo maior recorde, empates, recordes simultâneos, reenvios, corrida entre encerramento e envio, migração e pontos offline tardios. Sem `REDIS_TEST_URL`, essa suíte é indicada como pendente, sem simular o comportamento do Redis. Use uma instância de desenvolvimento, nunca credenciais de produção.
+
+O workflow de testes do GitHub Actions cria seu próprio Redis descartável e roda a suíte completa em pushes e pull requests.
+
+Depois de alterar o jogo web, sincronize os arquivos usados pelo empacotamento Android com `node scripts/sync-android-assets.mjs`. Isso atualiza os fontes embarcados; para distribuir um APK novo é necessário compilá-lo novamente.
+
+A proposta, especificações, decisões de design e tarefas estão em [docs/premiacao-e-informacoes.md](docs/premiacao-e-informacoes.md).
 
 ---
 

@@ -1,5 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { redis, clean, body } from './_lib.mjs';
+import { GUIDANCE_KEY } from './_competition-store.mjs';
 
 const hashPin = (pin, salt) => scryptSync(pin, salt, 32).toString('hex');
 const MAX_FAILS = 5;
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
       const claimed = await redis.hsetnx('nicks', nickname.toLowerCase(), phone);
       if (!claimed) return res.status(409).json({ error: 'Apelido ja em uso' });
       const salt = randomBytes(16).toString('hex');
-      user = { nickname, salt, hash: hashPin(pin, salt), createdAt: Date.now() };
+      user = { nickname, salt, hash: hashPin(pin, salt), createdAt: Date.now(), guidanceVersion: 1 };
       // hsetnx evita que duas requisições simultâneas criem a mesma conta
       if (!(await redis.hsetnx('users', phone, user))) {
         await redis.hdel('nicks', nickname.toLowerCase());
@@ -47,7 +48,8 @@ export default async function handler(req, res) {
 
     const token = randomBytes(24).toString('hex');
     await redis.set(`sess:${token}`, phone, { ex: 60 * 60 * 24 * 30 });
-    res.status(200).json({ token, nickname: user.nickname });
+    const guidanceRequired = user.guidanceVersion === 1 && !(await redis.hget(GUIDANCE_KEY, phone));
+    res.status(200).json({ token, nickname: user.nickname, guidanceRequired });
   } catch (e) {
     res.status(500).json({ error: 'servidor indisponivel' });
   }

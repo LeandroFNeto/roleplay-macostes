@@ -26,11 +26,13 @@ function loadService(localStorage, fetch, online = true, href = 'https://game.te
     return { context, service: context.service, events };
 }
 
-function loadGame(search = '', origin = 'https://game.test', realServices = false) {
+function loadGame(search = '', origin = 'https://game.test', realServices = false, sharedStorage = storage(), instantTimers = false) {
     const elements = new Map();
     function element() {
         return {
             children: [], dataset: {}, style: {}, className: '', textContent: '', innerText: '', events: {},
+            open: false, openCount: 0,
+            showModal() { this.open = true; this.openCount++; }, close() { this.open = false; },
             classList: { add() {}, remove() {}, contains() { return true; } },
             set innerHTML(value) { this.children = []; },
             append(...items) { this.children.push(...items); },
@@ -50,11 +52,11 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
     const timers = [];
     const context = vm.createContext({
         document, URL, URLSearchParams, Date, Image: class {},
-        AbortController, setTimeout, clearTimeout,
+        AbortController, setTimeout: instantTimers ? callback => { callback(); return 1; } : setTimeout, clearTimeout,
         window: { location: new URL(`${origin}/index.html${search}`), addEventListener() {} },
-        localStorage: storage(),
+        localStorage: sharedStorage,
         fetch() { throw new Error('O teste não deve acessar o servidor'); },
-        AuthStore: { getCurrentUser() { return null; }, saveUser() {} },
+        AuthStore: { getCurrentUser() { return null; }, saveUser() {}, shouldShowGuidance() { return false; } },
         RankingService: { startPeriodicSync() {}, prizeWinner: null },
         setInterval(callback) { timers.push(callback); }
     });
@@ -96,12 +98,15 @@ test('o aviso mostra só os dois jogos com maior bônus e preserva o bônus de u
     assert.match(elements.get('payout-countdown').textContent, /^\d{2}:\d{2}$/);
 });
 
-test('um milhão local exibe pendência; só a confirmação do servidor anuncia vitória', () => {
+test('um milhão não vence; um bilhão local aguarda confirmação; só o servidor anuncia vitória', () => {
     const { context, elements } = loadGame();
     vm.runInContext("currentUser = { nickname: 'Ana', highScore: 1000000 }; updatePrizeNotice();", context);
+    assert.doesNotMatch(elements.get('prize-status').textContent, /venceu|Você venceu|Aguardando confirmação/);
+    vm.runInContext("currentUser.highScore = 1250000000; updatePrizeNotice();", context);
     assert.match(elements.get('prize-status').textContent, /Aguardando confirmação/);
-    vm.runInContext("RankingService.prizeWinner = { nickname: 'Ana' }; updatePrizeNotice();", context);
-    assert.match(elements.get('prize-status').textContent, /Seu telefone cadastrado foi salvo/);
+    vm.runInContext("RankingService.competition = { status: 'closed', reason: 'target', winner: { nickname: 'Ana', score: 1250000000 } }; updatePrizeNotice();", context);
+    assert.match(elements.get('prize-status').textContent, /Você venceu/);
+    assert.match(elements.get('competition-status').textContent, /Vencedor: Ana/);
 });
 
 test('o recorde offline é enviado após reabrir o jogo, mesmo com saldo menor', async () => {
@@ -112,7 +117,7 @@ test('o recorde offline é enviado após reabrir o jogo, mesmo com saldo menor',
     const sent = [];
     const online = loadService(localStorage, async (url, options) => {
         if (options.method === 'POST') sent.push(JSON.parse(options.body));
-        return { ok: true, json: async () => ({ players: [], prizeWinner: { nickname: 'Ana' } }) };
+        return { ok: true, json: async () => ({ players: [], competition: { status: 'closed', winner: { nickname: 'Ana' } } }) };
     }).service;
     online.getMe = () => ({ id: 'usr_001', token: 'test', score: 700000 });
     await online.syncWithServer();
@@ -132,63 +137,6 @@ test('a sincronização não atribui pontos pendentes de outra conta ao jogador 
     service.getMe = () => ({ id: 'usr_B', token: 'test', score: 5000 });
     await service.syncWithServer();
     assert.equal(submitted.score, 5000);
-});
-
-function rankingApi() {
-    const values = new Map();
-    const hashes = new Map();
-    const redis = {
-        async get(key) { return values.get(key) ?? null; },
-        async set(key, value, options) {
-            if (options?.nx && values.has(key)) return null;
-            values.set(key, structuredClone(value));
-            return 'OK';
-        },
-        async hget(key, id) { return hashes.get(key)?.[id] ?? null; },
-        async hset(key, entries) { hashes.set(key, { ...hashes.get(key), ...entries }); },
-        async hgetall(key) { return hashes.get(key) ?? {}; }
-    };
-    const context = vm.createContext({
-        redis,
-        clean: (value, length) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, length),
-        body: req => req.body || {},
-        getSession: async req => req.session || null
-    });
-    const source = fs.readFileSync('api/ranking.mjs', 'utf8')
-        .replace(/^import .*;\r?\n/, '')
-        .replace('export default async function handler', 'async function handler');
-    vm.runInContext(source + '\nthis.handler = handler;', context);
-    async function request(method, score, phone, nickname = 'Ana') {
-        const response = { statusCode: 200, setHeader() {}, status(code) { this.statusCode = code; return this; },
-            json(data) { this.data = data; }, end() {} };
-        await context.handler({ method, body: { score, phone: 'forged', nickname: 'forged' },
-            session: phone ? { phone, user: { nickname } } : null }, response);
-        return response;
-    }
-    return { values, request };
-}
-
-test('somente pontuações autenticadas a partir de um milhão podem registrar o prêmio', async () => {
-    const { values, request } = rankingApi();
-    assert.equal((await request('POST', 1000000)).statusCode, 401);
-    assert.equal((await request('POST', 'invalid', '001')).statusCode, 400);
-    await request('POST', 999999, '001');
-    assert.equal(values.size, 0);
-    await request('POST', 1000000, '001');
-    assert.equal(values.get('prize:first-million').phone, '001');
-    assert.equal(values.get('prize:first-million').nickname, 'Ana');
-});
-
-test('requisições simultâneas elegem um único vencedor e a API nunca expõe seu telefone', async () => {
-    const { values, request } = rankingApi();
-    await Promise.all(Array.from({ length: 20 }, (_, i) => request('POST', 1000000 + i, `phone_${i}`, `Jogador ${i}`)));
-    const first = structuredClone(values.get('prize:first-million'));
-    await request('POST', 2000000, 'outro', 'Outro jogador');
-    assert.deepEqual(values.get('prize:first-million'), first);
-    const response = await request('GET');
-    assert.equal(response.data.prizeWinner.nickname, first.nickname);
-    assert.deepEqual(Object.keys(response.data.prizeWinner).sort(), ['achievedAt', 'nickname', 'score']);
-    assert.ok(!JSON.stringify(response.data).includes('phone_'));
 });
 
 test('telefone com ou sem DDI recupera a mesma conta e o mesmo saldo', async () => {
@@ -345,5 +293,139 @@ test('a interface diferencia falta de internet, servidor indisponível e dados s
         vm.runInContext(`renderConnectionStatus('${state}')`, context);
         assert.match(elements.get('connection-title').textContent, pattern);
         assert.equal(elements.get('connection-notice').dataset.state, state);
+    }
+});
+
+test('orientações aparecem uma vez por conta nova e continuam acessíveis após reload, login e troca de mascote', () => {
+    const localStorage = storage();
+    const user = { id: 'usr_A', nickname: 'Ana', token: 'test', guidanceRequired: true, balance: 5000 };
+    localStorage.setItem('tigrinho_active_user', JSON.stringify(user));
+    const first = loadGame('', 'https://game.test', true, localStorage);
+    assert.equal(first.elements.get('info-panel').openCount, 1);
+    first.elements.get('info-understood-btn').events.click();
+    assert.equal(first.elements.get('info-panel').open, false);
+    const reload = loadGame('?setor=agronomia', 'https://game.test', true, localStorage);
+    assert.equal(reload.elements.get('info-panel').openCount, 0);
+    reload.elements.get('open-info-btn').events.click();
+    assert.equal(reload.elements.get('info-panel').openCount, 1);
+    reload.elements.get('close-info-btn').events.click();
+    vm.runInContext("AuthStore.logout(); AuthStore.saveUser({ id: 'usr_A', nickname: 'Ana', token: 'new', guidanceRequired: true });", reload.context);
+    const login = loadGame('', 'https://game.test', true, localStorage);
+    assert.equal(login.elements.get('info-panel').openCount, 0);
+    vm.runInContext("AuthStore.saveUser({ id: 'usr_B', nickname: 'Bia', token: 'test', guidanceRequired: true });", login.context);
+    assert.equal(loadGame('', 'https://game.test', true, localStorage).elements.get('info-panel').openCount, 1);
+});
+
+test('contas existentes não recebem orientação automática; confirmação do servidor funciona em outro aparelho', async () => {
+    for (const required of [false, undefined]) {
+        const localStorage = storage();
+        localStorage.setItem('tigrinho_active_user', JSON.stringify({ id: 'old', token: 'test', nickname: 'Antigo', guidanceRequired: required }));
+        assert.equal(loadGame('', 'https://game.test', true, localStorage).elements.get('info-panel').openCount, 0);
+    }
+    const localStorage = storage();
+    const context = vm.createContext({ localStorage, fetch: async () => ({ ok: true,
+        json: async () => ({ nickname: 'Ana', token: 'test', guidanceRequired: false }) }) });
+    loadAppMode(context);
+    vm.runInContext(fs.readFileSync('auth-store.js', 'utf8') + '\nthis.auth = AuthStore;', context);
+    const { user } = await context.auth.login('43999990000', '1234');
+    assert.equal(context.auth.shouldShowGuidance(user), false);
+    assert.equal(context.auth.guidanceFor(user.id).seen, true);
+});
+
+test('apresentar orientações offline persiste imediatamente e a confirmação sincroniza ao reconectar', async () => {
+    const localStorage = storage();
+    localStorage.setItem('tigrinho_active_user', JSON.stringify({ id: 'usr_A', token: 'test', nickname: 'Ana', guidanceRequired: true }));
+    const game = loadGame('', 'https://game.test', true, localStorage);
+    assert.equal(game.elements.get('info-panel').openCount, 1);
+    assert.equal(JSON.parse(localStorage.getItem('tigrinho_account_guidance_v1')).usr_A.pending, true);
+    const sent = [];
+    const { service } = loadService(localStorage, async (url, options) => {
+        if (options.method === 'POST') sent.push(JSON.parse(options.body));
+        return { ok: true, json: async () => ({ players: [], guidanceSeen: true }) };
+    });
+    service.getMe = () => ({ id: 'usr_A', token: 'test', score: 5000, guidanceSeen: true });
+    service.onScoreConfirmed = id => vm.runInContext(`AuthStore.markGuidanceSeen('${id}', true)`, game.context);
+    await service.syncWithServer();
+    assert.equal(sent[0].guidanceSeen, true);
+    assert.equal(JSON.parse(localStorage.getItem('tigrinho_account_guidance_v1')).usr_A.pending, false);
+});
+
+test('recordes pendentes de duas contas sobrevivem à troca de jogador e sincronizam com suas identidades', async () => {
+    const localStorage = storage();
+    const { service: offline } = loadService(localStorage, () => { throw Error('offline'); }, false);
+    offline.getMe = () => ({ id: 'A', score: 900000000 });
+    offline.submitScore('Ana', 900000000, 'Computação', '🐗');
+    offline.getMe = () => ({ id: 'B', score: 800000000 });
+    offline.submitScore('Bia', 800000000, 'Biologia', '🐻');
+    const sent = [];
+    const { service } = loadService(localStorage, async (url, options) => {
+        if (options.method === 'POST') sent.push(JSON.parse(options.body));
+        return { ok: true, json: async () => ({ players: [], competition: { status: 'closed', winner: { nickname: 'Outra' } },
+            confirmedScore: 900000000, eligibleScore: null, awardEligibility: 'closed' }) };
+    });
+    for (const id of ['A', 'B']) {
+        service.getMe = () => ({ id, token: id, score: 5000 });
+        await service.syncWithServer();
+    }
+    assert.equal(sent[0].score, 900000000);
+    assert.equal(sent[0].token, 'A');
+    assert.equal(sent[1].score, 800000000);
+    assert.equal(sent[1].token, 'B');
+    assert.equal(Object.keys(service.pendingByUser()).length, 0);
+});
+
+test('novo recorde durante envio não é removido pela resposta do envio anterior', async () => {
+    const localStorage = storage();
+    let release;
+    const blocked = new Promise(resolve => { release = resolve; });
+    const { service } = loadService(localStorage, async (url, options) => {
+        if (options.method === 'POST') await blocked;
+        return { ok: true, json: async () => ({ players: [] }) };
+    });
+    service.getMe = () => ({ id: 'A', token: 'test', score: 5000 });
+    service.submitScore('Ana', 10000, 'Computação', '🐗');
+    service.submitScore('Ana', 20000, 'Computação', '🐗');
+    release();
+    await service.syncPromise;
+    assert.equal(service.pendingFor('A').score, 20000);
+});
+
+test('resultado confirmado da competição permanece disponível após reabrir offline', async () => {
+    const localStorage = storage();
+    const { service } = loadService(localStorage, async () => ({ ok: true,
+        json: async () => ({ players: [], competition: { status: 'closed', reason: 'organization', winner: { nickname: 'Ana', score: 900000000 } } }) }));
+    await service.syncWithServer();
+    const offline = loadService(localStorage, () => { throw Error('offline'); }, false).service;
+    offline.startPeriodicSync(() => {}, () => null);
+    await offline.syncWithServer();
+    assert.equal(offline.competition.status, 'closed');
+    assert.equal(offline.competition.winner.score, 900000000);
+});
+
+test('um giro mantém relíquia automática, pontuação bonificada e dez rodadas de bônus sem botão manual', async () => {
+    const { context, elements } = loadGame('', 'https://game.test', false, storage(), true);
+    vm.runInContext(`
+        currentUser = { id: 'A', nickname: 'Ana', token: 'test' };
+        Math.random = () => 0;
+        globalThis.spinCount = 0;
+        globalThis.submitted = [];
+        animateSpin = async () => { globalThis.spinCount++; };
+        getWinningLines = () => globalThis.spinCount === 1 ? [[0, 1, 2]] : [];
+        highlightWins = () => {};
+        RankingService.submitScore = (...args) => globalThis.submitted.push(args);
+    `, context);
+    await vm.runInContext('playNormalSpin()', context);
+    assert.equal(vm.runInContext('activeMascotMultiplier', context), 2);
+    assert.equal(vm.runInContext('spinCount', context), 11);
+    assert.equal(vm.runInContext('submitted.length', context), 1);
+    assert.ok(vm.runInContext('submitted[0][1] > 5000', context));
+    assert.equal(vm.runInContext('isSpinning', context), false);
+    assert.ok(elements.get('relic-img').src);
+    assert.equal(fs.readFileSync('index.html', 'utf8').includes('test-card-btn'), false);
+});
+
+test('os fontes Android embarcam a mesma interface, sincronização e cache da versão web', () => {
+    for (const name of ['index.html', 'style.css', 'script.js', 'auth-store.js', 'ranking-service.js', 'sw.js']) {
+        assert.equal(fs.readFileSync(`android/app/src/main/assets/${name}`, 'utf8'), fs.readFileSync(name, 'utf8'), name);
     }
 });
