@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0c0204">
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/mascots/computacao-javali.png">
     <script src="tailwind.cdn.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -21,7 +21,8 @@
         <div class="ornamental-modal-card w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
             <div class="text-5xl mb-3 drop-shadow-[0_0_15px_#facc15]">🎓</div>
             <h2 class="text-2xl font-black text-yellow-300 mb-2 drop-shadow-md">Desafio das Atléticas</h2>
-            <p class="text-xs text-yellow-100/70 mb-6">Entre com seu telefone (1 conta por número) para acumular pontos no ranking global dos centros acadêmicos!</p>
+            <p id="login-description" class="text-xs text-yellow-100/70 mb-6">Entre com seu telefone (1 conta por número) para acumular pontos no ranking global dos centros acadêmicos!</p>
+            <button id="demo-login-btn" hidden class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-4 py-3 rounded-xl">Entrar no teste local</button>
             
             <form id="login-form" class="flex flex-col gap-3">
                 <input type="tel" id="login-phone" placeholder="Telefone com DDD" required maxlength="16" autocomplete="tel"
@@ -30,7 +31,7 @@
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
                 <input type="text" id="login-input" placeholder="Apelido (só no 1º acesso)" maxlength="20"
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <p class="text-[10px] text-yellow-100/60 leading-snug">📱 Seu telefone é usado somente para entrar em contato com o vencedor e entregar a premiação. Não será usado para nenhum outro fim.</p>
+                <p class="text-[11px] text-yellow-100/80 leading-snug">🏆 O primeiro jogador a atingir 1.000.000 de pontos ganha o prêmio! Cadastre seu telefone com DDD corretamente: o número será salvo para a organização entrar em contato com o vencedor.</p>
                 <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
                 <button type="submit" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-[0_4px_0_#78350f] border border-yellow-200 transition-all">
                     ENTRAR E JOGAR
@@ -46,8 +47,8 @@
                 <div class="flex items-center gap-2">
                     <span class="text-2xl drop-shadow-[0_0_10px_#facc15]">🏆</span>
                     <div>
-                        <h3 class="font-black text-lg text-yellow-300">Ranking dos Centros</h3>
-                        <p class="text-[10px] text-yellow-200/60">Atualiza automaticamente a cada 30s</p>
+                        <h3 id="ranking-title" class="font-black text-lg text-yellow-300">Ranking dos Centros</h3>
+                        <p id="ranking-description" class="text-[10px] text-yellow-200/60">Atualiza automaticamente a cada 30s</p>
                     </div>
                 </div>
                 <button id="close-ranking-btn" aria-label="Fechar ranking" class="text-yellow-400 hover:text-white text-xl w-10 h-10 flex items-center justify-center font-bold rounded-lg hover:bg-white/10 active:scale-95 transition-all">✕</button>
@@ -97,7 +98,7 @@
         </div>
     </div>
 
-    <!-- SELETOR RÁPIDO DE ATLÉTICAS / MASCOTES NO TOPO -->
+    <!-- CONTA E AVISOS DOS JOGOS -->
     <div class="w-full max-w-md md:max-w-lg mb-1 sm:mb-2 flex flex-col gap-1 px-1">
         <div class="flex items-center justify-between text-[11px] sm:text-xs gap-1">
             <div class="flex items-center gap-1.5 sm:gap-2">
@@ -122,10 +123,24 @@
             </div>
         </div>
 
-        <!-- Carrossel de botões rápidos para alternar mascote -->
-        <div class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-0.5 sm:py-1 scrollbar-none" id="mascot-quick-bar">
-            <!-- Gerado via JS com os 5 mascotes -->
-        </div>
+        <aside id="connection-notice" class="game-notice connection-notice" data-state="checking" role="status" aria-live="polite" aria-atomic="true">
+            <strong id="connection-title">Verificando conexão...</strong>
+            <p id="connection-description" class="game-notice-detail">Você pode jogar enquanto verificamos o servidor.</p>
+            <p id="offline-cache-status" class="game-notice-detail">Preparando arquivos para jogar offline...</p>
+        </aside>
+        <aside id="demo-notice" class="game-notice" hidden>
+            <strong>🧪 Modo de teste local</strong>
+            <p class="game-notice-detail">Sem telefone ou PIN. Saldo e ranking ficam só neste navegador e não participam da premiação oficial.</p>
+        </aside>
+        <aside id="payout-notice" class="game-notice" aria-label="Jogos com maior bônus">
+            <p>🔥 Pagando mais agora: <span id="payout-games"></span></p>
+            <p class="game-notice-detail">Bônus de 3,5x em pontos. Troque pelo link. Próxima rotação em <span id="payout-countdown" class="font-mono">--:--</span>.</p>
+        </aside>
+        <aside id="prize-notice" class="game-notice prize-notice" aria-label="Desafio de um milhão de pontos">
+            <p>🏆 Primeiro a <strong>1.000.000 de pontos</strong> ganha o prêmio!</p>
+            <p class="game-notice-detail">Cadastre seu telefone com DDD para receber o prêmio. O número do vencedor fica salvo com a organização.</p>
+            <p id="prize-status" class="game-notice-detail" role="status" aria-live="polite"></p>
+        </aside>
     </div>
 
     <!-- MÁQUINA DE SLOT ESTILO FORTUNE TIGER -->
@@ -238,15 +253,12 @@
     </footer>
 
     <!-- MÓDULOS JAVASCRIPT EM ORDEM DE DEPENDÊNCIA -->
+    <script src="app-mode.js"></script>
     <script src="mascots-config.js"></script>
     <script src="auth-store.js"></script>
     <script src="ranking-service.js"></script>
     <script src="script.js" defer></script>
     <script>
-        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
-
         // Botao "Baixar app": prompt nativo (Android/Chrome) ou instrucao manual (iOS).
         (() => {
             const btn = document.getElementById('install-btn');
@@ -265,5 +277,3 @@
     </script>
 </body>
 </html>
-
-

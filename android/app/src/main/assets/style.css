@@ -30,6 +30,71 @@ body {
     box-sizing: border-box;
 }
 
+[hidden] {
+    display: none !important;
+}
+
+.game-notice {
+    position: relative;
+    z-index: 10;
+    padding: 7px 10px;
+    border: 1px solid #92400e;
+    border-radius: 10px;
+    background: rgba(36, 4, 7, 0.94);
+    color: #fef08a;
+    font-size: 11px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.game-notice-detail {
+    color: #fde68a;
+    font-size: 10px;
+}
+
+.game-notice a {
+    color: #facc15;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.game-notice a:focus-visible {
+    outline: 2px solid #facc15;
+    outline-offset: 3px;
+}
+
+a[data-game-link][aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.prize-notice {
+    border-color: #047857;
+}
+
+.connection-notice[data-state="online"] {
+    border-color: #10b981;
+}
+
+.connection-notice[data-state="offline"] {
+    border-color: #f59e0b;
+}
+
+.connection-notice[data-state="server-unavailable"],
+.connection-notice[data-state="auth-required"] {
+    border-color: #fb7185;
+}
+
+.connection-notice[data-state="syncing"],
+.connection-notice[data-state="checking"] {
+    border-color: #38bdf8;
+}
+
+#prize-status:empty {
+    display: none;
+}
+
 /* Ambientação com partículas de ouro sutis */
 body::before {
     content: '';
@@ -682,10 +747,6 @@ body::before {
         min-height: 40px !important;
     }
 
-    #mascot-quick-bar {
-        padding-top: 2px !important;
-        padding-bottom: 2px !important;
-    }
 }
 
 @media (max-height: 640px) {
@@ -760,6 +821,3 @@ body::before {
         font-size: 1rem !important;
     }
 }
-
-
-

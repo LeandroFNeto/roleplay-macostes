@@ -1,6 +1,8 @@
 import { redis, clean, body, getSession } from './_lib.mjs';
 
 const KEY = 'ranking:players';
+const PRIZE_KEY = 'prize:first-million';
+const PRIZE_TARGET = 1000000;
 const ONLINE_MS = 75000; // 2 heartbeats de 30s + folga
 
 export default async function handler(req, res) {
@@ -18,6 +20,17 @@ export default async function handler(req, res) {
       const id = sess.phone;
       const old = await redis.hget(KEY, id);
       const now = Date.now();
+      if (score >= PRIZE_TARGET) {
+        // SET NX é atômico: apenas o primeiro registro confirmado recebe o prêmio.
+        // O telefone vem da sessão autenticada e fica somente neste registro privado.
+        await redis.set(PRIZE_KEY, {
+          phone: sess.phone,
+          nickname,
+          score,
+          sector: clean(b.sector, 60),
+          achievedAt: now,
+        }, { nx: true });
+      }
       // mantém o maior score já salvo; o heartbeat só renova lastSeen
       await redis.hset(KEY, {
         [id]: {
@@ -39,9 +52,18 @@ export default async function handler(req, res) {
       .map((p) => ({ ...p, online: now - p.lastSeen < ONLINE_MS }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 50);
-    res.status(200).json({ players, online: all.filter((p) => now - p.lastSeen < ONLINE_MS).length });
+    const winner = await redis.get(PRIZE_KEY);
+    res.status(200).json({
+      players,
+      online: all.filter((p) => now - p.lastSeen < ONLINE_MS).length,
+      // Nunca devolve o telefone do vencedor na API pública.
+      prizeWinner: winner ? {
+        nickname: winner.nickname,
+        score: winner.score,
+        achievedAt: winner.achievedAt,
+      } : null,
+    });
   } catch (e) {
     res.status(500).json({ error: 'servidor indisponivel' });
   }
 }
-

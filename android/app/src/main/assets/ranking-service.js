@@ -1,12 +1,41 @@
 // Serviço de Ranking Global com suporte Offline-First para Sistemas Distribuídos
 const RankingService = {
-    STORAGE_KEY: 'tigrinho_global_ranking',
-    OFFLINE_PENDING_KEY: 'tigrinho_offline_pending_score',
-    LAST_SYNC_KEY: 'tigrinho_ranking_last_sync',
-    DEFAULT_API_URL: 'http://localhost:3000/api/ranking',
+    STORAGE_KEY: AppMode.localDemo ? 'tigrinho_demo_ranking' : 'tigrinho_global_ranking',
+    OFFLINE_PENDING_KEY: AppMode.localDemo ? 'tigrinho_demo_pending_score' : 'tigrinho_offline_pending_score',
+    LAST_SYNC_KEY: AppMode.localDemo ? 'tigrinho_demo_last_sync' : 'tigrinho_ranking_last_sync',
+    DEFAULT_API_URL: '/api/ranking',
+    onlineCount: 0,
+    prizeWinner: null,
+    getMe: null,
+    onUnauthorized: null,
     REFRESH_INTERVAL_MS: 30000,
     timerId: null,
     onUpdateCallback: null,
+    connectionState: 'checking',
+    onConnectionChange: null,
+    REQUEST_TIMEOUT_MS: 8000,
+    syncPromise: null,
+    requestController: null,
+
+    setConnectionState(state) {
+        this.connectionState = typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : state;
+        if (typeof this.onConnectionChange === 'function') this.onConnectionChange(this.connectionState);
+    },
+
+    // Um servidor que não responde não pode deixar a sincronização presa para sempre.
+    async requestJson(url, options) {
+        const controller = new AbortController();
+        this.requestController = controller;
+        const timer = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT_MS);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+            const data = await response.json();
+            return { response, data };
+        } finally {
+            clearTimeout(timer);
+            if (this.requestController === controller) this.requestController = null;
+        }
+    },
 
     // Sem dados fictícios de exemplo (apenas jogadores reais)
     defaultLeaders: [],
@@ -59,6 +88,7 @@ const RankingService = {
         const existingIdx = list.findIndex(item => item.nickname.toLowerCase() === nickname.toLowerCase());
 
         const userScore = {
+            userId: (this.getMe && this.getMe()?.id) || null,
             nickname,
             score,
             sector: sectorName,
@@ -78,6 +108,11 @@ const RankingService = {
         const top50 = list.slice(0, 50);
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(top50));
 
+        if (AppMode.localDemo) {
+            if (typeof this.onUpdateCallback === 'function') this.onUpdateCallback(top50);
+            return top50;
+        }
+
         // Guarda pontuação como pendente para reconciliação com o servidor
         localStorage.setItem(this.OFFLINE_PENDING_KEY, JSON.stringify(userScore));
 
@@ -89,35 +124,70 @@ const RankingService = {
 
     // Sincronização com o servidor distribuído (salva a última lista do momento, atualiza quando online)
     async syncWithServer() {
+        if (this.syncPromise) return this.syncPromise;
+        this.syncPromise = this.performSync();
+        try {
+            return await this.syncPromise;
+        } finally {
+            this.syncPromise = null;
+        }
+    },
+
+    async performSync() {
+        if (AppMode.localDemo) {
+            this.setConnectionState('local-demo');
+            this.prizeWinner = null;
+            const list = this.getRanking();
+            if (typeof this.onUpdateCallback === 'function') this.onUpdateCallback(list);
+            return list;
+        }
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            this.setConnectionState('offline');
             return this.getRanking();
         }
 
         const apiUrl = this.getApiUrl();
+        this.setConnectionState('syncing');
 
         try {
-            // 1. Envia pontuação offline acumulada caso exista
+            // 1. Envia pontuação atual (também serve de heartbeat de online) ou a pendente offline
             const pendingRaw = localStorage.getItem(this.OFFLINE_PENDING_KEY);
-            if (pendingRaw) {
-                const pendingScore = JSON.parse(pendingRaw);
-                const postRes = await fetch(apiUrl, {
+            const me = this.getMe && this.getMe();
+            if (me && me.token) {
+                const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
+                const pendingScore = {
+                    ...me,
+                    score: Math.max(me.score, pending?.userId === me.id ? pending.score : 0)
+                };
+                const { response: postRes } = await this.requestJson(apiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + me.token },
                     body: JSON.stringify(pendingScore)
                 });
-                if (postRes && postRes.ok) {
-                    localStorage.removeItem(this.OFFLINE_PENDING_KEY);
+                if (postRes.status === 401) {
+                    this.setConnectionState('auth-required');
+                    if (this.onUnauthorized) this.onUnauthorized();
+                    return this.getRanking();
+                }
+                if (!postRes.ok) throw new Error('Falha ao enviar a pontuação');
+                if (postRes.ok) {
+                    // Uma rodada pode ter salvo mais pontos enquanto o POST estava em andamento.
+                    if (localStorage.getItem(this.OFFLINE_PENDING_KEY) === pendingRaw) {
+                        localStorage.removeItem(this.OFFLINE_PENDING_KEY);
+                    }
                 }
             }
 
             // 2. Busca a lista mais recente do momento no servidor distribuído
-            const res = await fetch(apiUrl, {
+            const { response: res, data } = await this.requestJson(apiUrl, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json' }
             });
 
             if (res && res.ok) {
-                const serverList = await res.json();
+                const serverList = Array.isArray(data) ? data : data.players;
+                this.onlineCount = data.online || 0;
+                this.prizeWinner = data.prizeWinner || null;
                 if (Array.isArray(serverList)) {
                     const fakeNames = ['javali_bcc', 'galo_agro', 'abelha_xxi', 'urso_mafia_bio', 'coice_vet', 'bixo_computacao'];
                     const cleanList = serverList.filter(item => !fakeNames.includes((item.nickname || '').toLowerCase()));
@@ -126,6 +196,7 @@ const RankingService = {
                     // Salva a última lista do momento localmente para uso offline
                     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cleanList.slice(0, 50)));
                     localStorage.setItem(this.LAST_SYNC_KEY, Date.now().toString());
+                    this.setConnectionState('online');
 
                     if (typeof this.onUpdateCallback === 'function') {
                         this.onUpdateCallback(cleanList);
@@ -133,21 +204,37 @@ const RankingService = {
                     return cleanList;
                 }
             }
+            throw new Error('Resposta do ranking indisponível ou inválida');
         } catch (err) {
             // Servidor indisponível ou em modo offline: mantém a última lista salva do storage
+            this.setConnectionState('server-unavailable');
         }
 
         return this.getRanking();
     },
 
     // Inicia ouvintes de reconexão automática e sincronização periódica
-    startPeriodicSync(onUpdateCallback) {
+    startPeriodicSync(onUpdateCallback, getMe) {
+        this.getMe = getMe;
         this.onUpdateCallback = onUpdateCallback;
         if (this.timerId) clearInterval(this.timerId);
 
         // Dispara imediatamente com a lista local salva
         if (typeof onUpdateCallback === 'function') {
             onUpdateCallback(this.getRanking());
+        }
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('offline', () => {
+                this.setConnectionState('offline');
+                if (this.requestController) this.requestController.abort();
+            });
+        }
+
+        if (AppMode.localDemo) {
+            this.setConnectionState('local-demo');
+            if (typeof window !== 'undefined') window.addEventListener('online', () => this.syncWithServer());
+            return;
         }
 
         // Tenta sincronizar com o servidor no início

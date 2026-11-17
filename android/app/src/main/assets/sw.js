@@ -1,9 +1,12 @@
-const CACHE_NAME = 'atleticas-v1';
-const ASSETS_TO_CACHE = [
+importScripts('./mascots-config.js');
+
+const CACHE_NAME = 'atleticas-v9';
+const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',
   './style.css',
   './script.js',
+  './app-mode.js',
   './auth-store.js',
   './ranking-service.js',
   './mascots-config.js',
@@ -33,8 +36,29 @@ const ASSETS_TO_CACHE = [
   './assets/animations/urso_buff.png',
   './assets/animations/urso_throw.png',
   './assets/animations/xicara_relic.png',
-  './assets/animations/ferradura_relic.png'
-];
+  './assets/animations/ferradura_relic.png',
+  // Inclui todos os fundos, símbolos e animações, mesmo dos jogos ainda não visitados.
+  ...Object.values(MASCOTS_CATALOG).flatMap(sector => [
+    sector.image, sector.throwImage, sector.relicImage, sector.bgImage,
+    ...(sector.symbolImages || [])
+  ]).filter(Boolean).map(path => './' + path)
+])];
+
+async function reportOfflineCache(target) {
+  const cache = await caches.open(CACHE_NAME);
+  const entries = await Promise.all(ASSETS_TO_CACHE.map(path => cache.match(path)));
+  target.postMessage({
+    type: 'OFFLINE_CACHE_STATUS',
+    version: CACHE_NAME,
+    ready: entries.every(Boolean)
+  });
+}
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'CHECK_OFFLINE_CACHE' && event.source) {
+    event.waitUntil(reportOfflineCache(event.source));
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -45,13 +69,68 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
-      keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-    )).then(() => self.clients.claim())
+      keys.filter((key) => key.startsWith('atleticas-') && key !== CACHE_NAME).map((key) => caches.delete(key))
+    )).then(() => self.clients.claim()).then(async () => {
+      const clients = await self.clients.matchAll({ type: 'window' });
+      await Promise.all(clients.map(reportOfflineCache));
+    })
   );
 });
 
+const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => response || fetch(event.request).catch(() => caches.match('./index.html')))
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Ranking e sessões devem sempre consultar o servidor, sem cache de respostas.
+  if (url.origin === location.origin && url.pathname.startsWith('/api/')) return;
+
+  // Navegacao: rede primeiro (versao nova), cache como fallback offline.
+  if (req.mode === 'navigate') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      try {
+        const response = await fetch(req, { signal: controller.signal });
+        if (response.ok) return response;
+        return (await cache.match('./index.html')) || response;
+      } catch {
+        return (await cache.match('./index.html')) || Response.error();
+      } finally {
+        clearTimeout(timer);
+      }
+    })());
+    return;
+  }
+  // Fontes externas: cache em tempo de execucao para funcionar offline apos a 1a visita.
+  if (FONT_HOSTS.includes(url.hostname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      try {
+        const response = await fetch(req);
+        if (response.ok) event.waitUntil(cache.put(req, response.clone()));
+        return response;
+      } catch {
+        // A fonte local padrão permite jogar mesmo sem fontes externas.
+        return new Response('', { status: 200 });
+      }
+    })());
+    return;
+  }
+  // Demais assets do mesmo origin: cache primeiro.
+  if (url.origin === location.origin) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const response = await fetch(req);
+      if (response.ok) event.waitUntil(cache.put(req, response.clone()));
+      return response;
+    })());
+  }
 });

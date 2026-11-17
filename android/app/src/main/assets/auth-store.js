@@ -1,7 +1,7 @@
 // Gerenciamento simples de identificação e persistência do jogador
 const AuthStore = {
-    STORAGE_KEY: 'tigrinho_active_user',
-    USERS_KEY: 'tigrinho_all_users',
+    STORAGE_KEY: AppMode.localDemo ? 'tigrinho_demo_active_user' : 'tigrinho_active_user',
+    USERS_KEY: AppMode.localDemo ? 'tigrinho_demo_all_users' : 'tigrinho_all_users',
 
     getCurrentUser() {
         const raw = localStorage.getItem(this.STORAGE_KEY);
@@ -13,32 +13,56 @@ const AuthStore = {
         }
     },
 
-    login(identifier) {
-        if (!identifier || !identifier.trim()) return null;
-        const cleanName = identifier.trim();
-        const userId = 'usr_' + cleanName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    // Login/cadastro no servidor: 1 conta por telefone. Retorna { user } ou { error }
+    async login(phone, pin, nickname) {
+        if (AppMode.localDemo) return this.loginDemo();
+        let res, data;
+        try {
+            res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, pin, nickname })
+            });
+            data = await res.json();
+        } catch (e) {
+            return { error: 'Sem conexão com o servidor. Conecte-se para entrar.' };
+        }
+        if (!res.ok) return { error: data.error || 'Falha no login' };
 
-        // Carrega base local de usuários para recuperar histórico
+        let normalizedPhone = String(phone).replace(/\D/g, '');
+        if (normalizedPhone.length >= 12 && normalizedPhone.startsWith('55')) normalizedPhone = normalizedPhone.slice(2);
+        const userId = 'usr_' + normalizedPhone;
         const allUsers = this.getAllUsers();
-        let user = allUsers[userId] || {
+        const user = allUsers[userId] || {
             id: userId,
-            nickname: cleanName,
             balance: 5000,
             highScore: 5000,
             roundsPlayed: 0,
-            favoriteSector: 'tecnologico',
-            updatedAt: Date.now()
+            favoriteSector: 'tecnologico'
         };
-
-        user.nickname = cleanName; // Atualiza caso tenha mudado casing
+        user.nickname = data.nickname;
+        user.token = data.token;
         user.updatedAt = Date.now();
         allUsers[userId] = user;
 
         localStorage.setItem(this.USERS_KEY, JSON.stringify(allUsers));
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-        return user;
+        return { user };
     },
 
+    loginDemo() {
+        if (!AppMode.localDemo) return { error: 'O teste está disponível somente em localhost com demo=1.' };
+        const user = this.getAllUsers().demo_local || {
+            id: 'demo_local',
+            nickname: 'Jogador de teste',
+            balance: 5000,
+            highScore: 5000,
+            roundsPlayed: 0,
+            isDemo: true
+        };
+        this.saveUser(user);
+        return { user };
+    },
     logout() {
         localStorage.removeItem(this.STORAGE_KEY);
     },
