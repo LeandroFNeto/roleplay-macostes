@@ -88,6 +88,7 @@ test('o aviso mostra só os dois jogos com maior bônus e preserva o bônus de u
     assert.equal(new Set(boosted).size, 2);
     const games = elements.get('payout-games').children.filter(child => typeof child === 'object');
     assert.equal(games.length, 2);
+    for (const game of games) assert.match(game.textContent, /3,5x/);
     assert.equal(games.filter(child => child.tagName === 'a').length, boosted.includes('computacao') ? 1 : 2);
     for (const game of games.filter(child => child.tagName === 'a')) {
         assert.ok(boosted.includes(new URL(game.href).searchParams.get('setor')));
@@ -106,7 +107,7 @@ test('um milhão não vence; um bilhão local aguarda confirmação; só o servi
     assert.match(elements.get('prize-status').textContent, /Aguardando confirmação/);
     vm.runInContext("RankingService.competition = { status: 'closed', reason: 'target', winner: { nickname: 'Ana', score: 1250000000 } }; updatePrizeNotice();", context);
     assert.match(elements.get('prize-status').textContent, /Você venceu/);
-    assert.match(elements.get('competition-status').textContent, /Vencedor: Ana/);
+    assert.equal(elements.has('competition-status'), false);
 });
 
 test('o recorde offline é enviado após reabrir o jogo, mesmo com saldo menor', async () => {
@@ -218,7 +219,7 @@ test('o modo de teste não faz requisições e não sobrescreve conta ou ranking
 test('todos os arquivos da lista de cache existem e incluem o módulo de modo de teste', () => {
     const worker = fs.readFileSync('sw.js', 'utf8');
     for (const match of worker.matchAll(/'\.\/([^']+)'/g)) {
-        assert.ok(fs.existsSync(match[1]), `Arquivo de cache ausente: ${match[1]}`);
+        assert.ok(fs.existsSync(match[1].split('?')[0]), `Arquivo de cache ausente: ${match[1]}`);
     }
     assert.ok(worker.includes("'./app-mode.js'"));
 });

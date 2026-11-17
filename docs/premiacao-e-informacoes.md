@@ -51,10 +51,10 @@ Respostas públicas usam allowlists; telefone, PIN, hash, tokens, identificadore
 
 ## Design da interface e orientações
 
-- O botão **ⓘ**, no canto direito da barra acima da máquina, abre um `dialog` com premiação, jogos bonificados e conexão/cache offline.
+- O botão **🔔 Notificações**, no canto direito da barra acima da máquina, usa o mesmo tamanho e estilo dos botões Ranking e QR Codes. Ele abre um `dialog` com conexão/cache offline, jogos bonificados com seus multiplicadores e premiação.
 - O painel possui título acessível, botão de fechar, ação “Entendi, vamos jogar”, rolagem, altura máxima de `85dvh` e comportamento de foco/teclado do diálogo nativo.
 - A barra permanece no fluxo do layout e os botões podem quebrar linha. O indicador compacto de conexão fica fora do painel; não exige abri-lo para consultar online, offline ou servidor indisponível.
-- O resultado confirmado também possui um resumo compacto na barra. Offline, o painel identifica que os dados correspondem à última consulta, sem declarar vitória a partir de pontos locais.
+- A meta e o resultado da premiação ficam dentro do painel, sem resumo na barra do jogo. Offline, o painel identifica que os dados correspondem à última consulta, sem declarar vitória a partir de pontos locais.
 - O botão e o listener de teste da relíquia são removidos. A função de animação e os gatilhos automáticos de bônus permanecem.
 
 Contas novas recebem `guidanceVersion: 1`. O login informa `guidanceRequired` enquanto a apresentação ainda não foi confirmada no servidor. Contas anteriores não recebem abertura automática. Ao apresentar o painel, o cliente persiste imediatamente um marcador por conta em `tigrinho_account_guidance_v1`, antes de abrir o diálogo. Isso evita repetição em reload, novos logins e troca de mascote no aparelho.
@@ -65,7 +65,7 @@ O próximo POST de sincronização envia `guidanceSeen: true`. O Redis registra 
 
 O saldo, o recorde e a última competição confirmada continuam persistidos. As pendências passam a ser separadas por conta, com leitura compatível da chave antiga; a sincronização nunca atribui o recorde de uma conta à sessão de outra. Se um novo recorde surgir durante um POST, a resposta anterior não o remove. Reenvios são idempotentes pelo máximo de pontuação e pela imutabilidade do estado fechado.
 
-O cache do Service Worker muda para `atleticas-v10`, preservando a estratégia existente para todos os mascotes e mantendo APIs fora do cache. Os arquivos embarcados no Android são sincronizados com a versão web. A configuração de acesso às APIs pela WebView local permanece uma necessidade já existente do projeto.
+O cache do Service Worker usa `atleticas-v11`, preservando a estratégia existente para todos os mascotes e mantendo APIs fora do cache. O HTML referencia CSS e script do jogo com `?v=11`, também incluídos no pré-cache, para evitar misturar a interface nova com arquivos antigos na atualização. Os arquivos embarcados no Android são sincronizados com a versão web. A configuração de acesso às APIs pela WebView local permanece uma necessidade já existente do projeto.
 
 ## Tarefas e validação
 

@@ -63,7 +63,7 @@ test('todos os recursos dos cinco mascotes ficam disponíveis sem rede após a p
     const harness = workerHarness();
     const assets = Array.from(vm.runInContext('ASSETS_TO_CACHE', harness.context));
     const catalog = vm.runInContext('MASCOTS_CATALOG', harness.context);
-    for (const asset of assets) assert.ok(fs.existsSync(asset), `Arquivo ausente: ${asset}`);
+    for (const asset of assets) assert.ok(fs.existsSync(asset.split('?')[0]), `Arquivo ausente: ${asset}`);
     await harness.dispatch('install');
     harness.disconnect();
     const before = harness.requests;
@@ -72,6 +72,12 @@ test('todos os recursos dos cinco mascotes ficam disponíveis sem rede após a p
             const response = await harness.request(path);
             assert.equal(response.status, 200, path);
         }
+    }
+    const html = fs.readFileSync('index.html', 'utf8');
+    for (const match of html.matchAll(/(?:src|href)="([^\"]+\.(?:css|js)(?:\?[^\"]*)?)"/g)) {
+        if (/^https?:/.test(match[1])) continue;
+        assert.ok(assets.includes('./' + match[1]), `Recurso do HTML fora do pré-cache: ${match[1]}`);
+        assert.equal((await harness.request(match[1])).status, 200, match[1]);
     }
     assert.equal(harness.requests, before, 'Imagens em cache não devem consultar a rede');
     const response = await harness.request('/?setor=biologia', 'navigate');

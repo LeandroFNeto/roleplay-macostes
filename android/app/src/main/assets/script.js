@@ -38,7 +38,6 @@ const dom = {
     payoutGames: document.getElementById('payout-games'),
     payoutCountdown: document.getElementById('payout-countdown'),
     prizeStatus: document.getElementById('prize-status'),
-    competitionStatus: document.getElementById('competition-status'),
     infoPanel: document.getElementById('info-panel'),
     openInfoBtn: document.getElementById('open-info-btn'),
     closeInfoBtn: document.getElementById('close-info-btn'),
@@ -240,7 +239,7 @@ function renderPayoutNotice() {
         if (index > 0) dom.payoutGames.append(' e ');
         const sector = MASCOTS_CATALOG[id];
         const item = document.createElement(id === currentSector.id ? 'span' : 'a');
-        item.textContent = `${sector.icon} ${sector.mascotName}`;
+        item.textContent = `${sector.icon} ${sector.mascotName} · ${getSectorCurrentBonus(sector).toLocaleString('pt-BR')}x`;
         if (id === currentSector.id) {
             item.append(' (você está aqui)');
         } else {
@@ -613,7 +612,6 @@ const esc = s => String(s).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + '
 function updatePrizeNotice() {
     if (AppMode.localDemo) {
         dom.prizeStatus.textContent = 'Teste local: a pontuação não participa da premiação oficial.';
-        dom.competitionStatus.textContent = 'Teste local';
         return;
     }
     const competition = RankingService.competition;
@@ -623,18 +621,14 @@ function updatePrizeNotice() {
         dom.prizeStatus.textContent = currentUser && winner.nickname === currentUser.nickname
             ? `🎉 Você venceu com ${winner.score.toLocaleString('pt-BR')} pontos! ${reason}. A organização poderá entrar em contato pelo telefone cadastrado.`
             : `🏆 ${winner.nickname} venceu com ${winner.score.toLocaleString('pt-BR')} pontos. ${reason}.`;
-        dom.competitionStatus.textContent = `🏆 Vencedor: ${winner.nickname}`;
     } else if (competition?.status === 'closed') {
         dom.prizeStatus.textContent = 'A organização encerrou a competição sem recordes elegíveis. Não houve vencedor. Você pode continuar jogando e sincronizando o ranking geral.';
-        dom.competitionStatus.textContent = 'Competição encerrada';
     } else if (currentUser && currentUser.highScore >= 1000000000) {
         dom.prizeStatus.textContent = 'Você atingiu ou ultrapassou 1 bilhão no aparelho! Aguardando confirmação do servidor. Somente pontos confirmados antes do encerramento concorrem ao prêmio.';
-        dom.competitionStatus.textContent = '1 bilhão local · pendente';
     } else {
         dom.prizeStatus.textContent = competition
             ? 'Competição aberta na última consulta. Vale seu maior recorde confirmado até o encerramento, mesmo que o saldo diminua. A meta antecipada é 1 bilhão.'
             : 'Conecte-se para consultar a competição. Recordes locais precisam ser confirmados pelo servidor antes do encerramento.';
-        dom.competitionStatus.textContent = competition ? 'Meta: 1 bilhão' : 'Premiação · aguardando servidor';
     }
 }
 
@@ -728,6 +722,8 @@ function renderQrCodesModal() {
 
 // O dialog nativo gerencia foco, teclado e retorno ao botão de informações.
 function openInformation() {
+    renderPayoutNotice();
+    dom.payoutCountdown.textContent = getBoostedSectorsState().timeFormatted;
     updatePrizeNotice();
     if (!dom.infoPanel.open) dom.infoPanel.showModal();
 }
@@ -810,7 +806,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v10') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v11') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'

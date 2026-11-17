@@ -87,7 +87,7 @@ A aplicação inclui um gerador/visualizador interno de QR Codes para testes e i
 
 Cada link abre o jogo do respectivo mascote. A conta, o saldo e o recorde são compartilhados entre os links no mesmo navegador. Os parâmetros antigos `sector` e `mascote` continuam aceitos.
 
-Acesse o botão **ⓘ**, no canto superior direito do jogo, para ver as regras, a conexão e os links dos dois jogos com bônus de **3,5x**. A rotação ocorre a cada **30 minutos**; os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus. A relíquia continua sendo ativada automaticamente pelos giros, sem botão de teste manual.
+Acesse o botão **🔔 Notificações**, com o mesmo estilo dos botões Ranking e QR Codes, para ver a conexão, os links dos dois jogos com maior bônus e as regras. Cada jogo bonificado mostra seu multiplicador de **3,5x**. A rotação ocorre a cada **30 minutos**; os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus. A relíquia continua sendo ativada automaticamente pelos giros, sem botão de teste manual. A meta não ocupa mais a barra do jogo; as regras de premiação permanecem no painel.
 
 ### Premiação: recorde confirmado e meta de 1 bilhão
 
@@ -103,7 +103,7 @@ O primeiro jogador a **atingir ou ultrapassar 1.000.000.000 de pontos confirmado
 
 ### Orientações e conexão
 
-As orientações abrem automaticamente uma vez para contas criadas nesta versão. A apresentação fica registrada imediatamente por conta no aparelho e é confirmada no Redis no próximo envio autenticado. Recarregar, trocar de mascote e sair/entrar não repetem a orientação. Outros aparelhos respeitam a confirmação do servidor após a sincronização. Se uma apresentação ocorrer offline, a confirmação é enviada ao reconectar; antes disso, outro aparelho ainda pode recebê-la. Contas antigas não são obrigadas a passar pelo aviso novo. O botão **ⓘ** sempre permite consultar novamente.
+As orientações abrem automaticamente uma vez para contas criadas nesta versão. A apresentação fica registrada imediatamente por conta no aparelho e é confirmada no Redis no próximo envio autenticado. Recarregar, trocar de mascote e sair/entrar não repetem a orientação. Outros aparelhos respeitam a confirmação do servidor após a sincronização. Se uma apresentação ocorrer offline, a confirmação é enviada ao reconectar; antes disso, outro aparelho ainda pode recebê-la. Contas antigas não são obrigadas a passar pelo aviso novo. O botão **🔔 Notificações** sempre permite consultar novamente.
 
 O indicador compacto de conexão fica fora do painel, na barra do jogo, e distingue **Online**, **Offline**, **Servidor indisponível**, sincronização e sessão expirada. O painel tem rolagem e limite de altura para telas pequenas; quando fechado, não cobre controles. As pendências offline são separadas por conta, inclusive ao trocar de jogador no mesmo aparelho.
 
