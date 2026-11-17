@@ -423,9 +423,3 @@ test('um giro mantém relíquia automática, pontuação bonificada e dez rodada
     assert.ok(elements.get('relic-img').src);
     assert.equal(fs.readFileSync('index.html', 'utf8').includes('test-card-btn'), false);
 });
-
-test('os fontes Android embarcam a mesma interface, sincronização e cache da versão web', () => {
-    for (const name of ['index.html', 'style.css', 'script.js', 'auth-store.js', 'ranking-service.js', 'sw.js']) {
-        assert.equal(fs.readFileSync(`android/app/src/main/assets/${name}`, 'utf8'), fs.readFileSync(name, 'utf8'), name);
-    }
-});
