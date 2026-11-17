@@ -1,5 +1,0 @@
-<resources>
-    <style name="Theme.FullScreen" parent="android:Theme.NoTitleBar.Fullscreen">
-        <item name="android:windowBackground">#0c0204</item>
-    </style>
-</resources>

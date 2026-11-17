@@ -14,7 +14,7 @@ O sistema foi concebido como um laboratório prático para desafios de computaç
 2. **Descoberta por QR Codes nos Campi:** Cartazes e totens com QR Codes posicionados estrategicamente em cada centro acadêmico (Ciência da Computação, Agronomia, Enfermagem, Medicina Veterinária, Ciências Biológicas) identificam a localização física do nó e concedem bônus específicos, mascotes dinâmicos e relíquias de cada curso.
 3. **Resiliência e Tolerância a Falhas (Offline-First):**
    - Os estudantes nem sempre possuem conexão de internet estável ao transitar entre salas, laboratórios e blocos da universidade.
-   - O jogo opera tanto em modo **Online** com sincronização distribuída periódica quanto em modo **Offline**, armazenando estados e pontuações em cache local (*LocalStorage / Service Worker / Android WebView Assets*).
+   - O jogo opera tanto em modo **Online** com sincronização distribuída periódica quanto em modo **Offline**, armazenando estados e pontuações em cache local (*LocalStorage / Service Worker / Cache do PWA*).
    - Ao restabelecer a conectividade de rede (`window.online`), o serviço reconcilia a pontuação pendente com o servidor distribuído de ranking de forma eventual e transparente.
 
 ---
@@ -38,12 +38,12 @@ Para tornar o teste de carga e a adesão dos alunos engajadora e divertida, a ap
 
 ## Modos de Execução & Versões
 
-### 1. Aplicativo Android Offline (APK)
-Para uso 100% autônomo sem necessidade de conexão ou servidor web externo:
-- O instalador **`Mascotes-UENP-Offline.apk`** está compilado e disponível para download na seção de [**Releases do GitHub**](../../releases).
-- Empacotado de forma autocontida para Android, com todos os assets de imagens, sons e scripts inclusos.
+### 1. Instalar como PWA (recomendado)
+- Abra **https://leandrofneto.github.io/roleplay-macostes/** no celular.
+- **Android (Chrome):** menu ⋮ → *Instalar app*. **iPhone (Safari):** Compartilhar → *Adicionar à Tela de Início*.
+- Após a primeira visita com internet, o jogo funciona offline e se atualiza sozinho quando houver conexão.
 
-### 2. Versão Web / PWA (Online e Cache Offline)
+### 2. Rodar localmente
 - Funciona em qualquer navegador moderno (Desktop e Mobile).
 - Suporte a Progressive Web App (PWA) via `sw.js` e `manifest.json`, permitindo instalação como aplicativo na tela inicial do celular.
 - Para rodar localmente:

@@ -1,0 +1,9 @@
+RewriteEngine On
+# PWA exige HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# sw.js e manifest sem cache longo, para atualizacoes chegarem
+<FilesMatch "^(sw\.js|manifest\.json|index\.html)$">
+  Header set Cache-Control "no-cache"
+</FilesMatch>

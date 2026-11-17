@@ -10,9 +10,22 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/mascots/computacao-javali.png",
-      "sizes": "192x192 512x512",
-      "type": "image/png"
+      "purpose": "any",
+      "type": "image/png",
+      "sizes": "192x192",
+      "src": "assets/icons/icon-192.png"
+    },
+    {
+      "purpose": "any",
+      "type": "image/png",
+      "sizes": "512x512",
+      "src": "assets/icons/icon-512.png"
+    },
+    {
+      "purpose": "maskable",
+      "type": "image/png",
+      "sizes": "512x512",
+      "src": "assets/icons/icon-maskable-512.png"
     }
   ]
 }
