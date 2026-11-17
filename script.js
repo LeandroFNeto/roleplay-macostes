@@ -1,4 +1,4 @@
-// ESTADO DO JOGO
+﻿// ESTADO DO JOGO
 let currentUser = null;
 let currentSector = null;
 let balance = 5000;
@@ -850,7 +850,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v10') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v11') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'
