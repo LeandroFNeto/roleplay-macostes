@@ -39,7 +39,7 @@ Para tornar o teste de carga e a adesão dos alunos engajadora e divertida, a ap
 ## Modos de Execução & Versões
 
 ### 1. Instalar como PWA (recomendado)
-- Abra **https://leandrofneto.github.io/roleplay-macostes/** no celular.
+- Abra **https://roleplay-macostes.vercel.app/** no celular.
 - **Android (Chrome):** menu ⋮ → *Instalar app*. **iPhone (Safari):** Compartilhar → *Adicionar à Tela de Início*.
 - Após a primeira visita com internet, o jogo funciona offline e se atualiza sozinho quando houver conexão.
 
