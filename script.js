@@ -35,12 +35,20 @@ const dom = {
     mascotRelicWrap: document.getElementById('mascot-relic-wrap'),
     relicImg: document.getElementById('relic-img'),
     gridImpactBurst: document.getElementById('grid-impact-burst'),
-    mascotQuickBar: document.getElementById('mascot-quick-bar'),
+    payoutGames: document.getElementById('payout-games'),
+    payoutCountdown: document.getElementById('payout-countdown'),
+    prizeStatus: document.getElementById('prize-status'),
+    competitionStatus: document.getElementById('competition-status'),
+    infoPanel: document.getElementById('info-panel'),
+    openInfoBtn: document.getElementById('open-info-btn'),
+    closeInfoBtn: document.getElementById('close-info-btn'),
+    infoUnderstoodBtn: document.getElementById('info-understood-btn'),
     username: document.getElementById('ui-username'),
     logoutBtn: document.getElementById('logout-btn'),
     loginModal: document.getElementById('login-modal'),
     loginForm: document.getElementById('login-form'),
     loginInput: document.getElementById('login-input'),
+    demoLoginBtn: document.getElementById('demo-login-btn'),
     rankingModal: document.getElementById('ranking-modal'),
     openRankingBtn: document.getElementById('open-ranking-btn'),
     closeRankingBtn: document.getElementById('close-ranking-btn'),
@@ -56,17 +64,37 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // INICIALIZAÇÃO DE SESSÃO / LOGIN
 function initAuth() {
+    document.getElementById('demo-notice').hidden = !AppMode.localDemo;
+    document.getElementById('prize-notice').hidden = AppMode.localDemo;
+    if (AppMode.localDemo) {
+        dom.loginForm.hidden = true;
+        dom.demoLoginBtn.hidden = false;
+        document.getElementById('login-description').textContent = 'Entre como jogador de teste, sem servidor. Os pontos ficam apenas neste navegador.';
+        document.getElementById('ranking-title').textContent = 'Ranking de teste';
+        document.getElementById('ranking-description').textContent = 'Somente os pontos deste navegador';
+    }
     currentUser = AuthStore.getCurrentUser();
     // contas antigas (sem token de telefone) precisam entrar de novo
-    if (currentUser && !currentUser.token) { AuthStore.logout(); currentUser = null; }
+    if (currentUser && !currentUser.token && !(AppMode.localDemo && currentUser.isDemo)) { AuthStore.logout(); currentUser = null; }
     if (!currentUser) {
         dom.loginModal.classList.remove('hidden');
     } else {
         dom.username.innerText = currentUser.nickname;
-        balance = currentUser.balance || 5000;
+        balance = currentUser.balance ?? 5000;
         updateUI();
     }
 }
+
+dom.demoLoginBtn.addEventListener('click', () => {
+    const { user } = AuthStore.loginDemo();
+    if (!user) return;
+    currentUser = user;
+    balance = user.balance ?? 5000;
+    dom.username.innerText = user.nickname;
+    dom.loginModal.classList.add('hidden');
+    updateUI();
+    showMessage('Teste local pronto! Escolha sua aposta.', 'bg-emerald-900', 'text-emerald-200');
+});
 
 dom.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -84,14 +112,17 @@ dom.loginForm.addEventListener('submit', async (e) => {
     }
     currentUser = user;
     dom.username.innerText = user.nickname;
-    balance = user.balance || 5000;
+    balance = user.balance ?? 5000;
     dom.loginModal.classList.add('hidden');
     updateUI();
     showMessage(`Bem-vindo, ${user.nickname}! Escolha sua aposta.`, 'bg-emerald-900', 'text-emerald-200');
+    showInitialGuidance();
+    RankingService.syncWithServer();
 });
 dom.logoutBtn.addEventListener('click', () => {
     AuthStore.logout();
     currentUser = null;
+    if (dom.infoPanel.open) dom.infoPanel.close();
     dom.username.innerText = 'Convidado';
     dom.loginInput.value = '';
     dom.loginModal.classList.remove('hidden');
@@ -201,69 +232,35 @@ function updateBonusPillUI() {
     }
 }
 
-// BARRA SELETORA RÁPIDA NO TOPO (COM DESTAQUE VISUAL DOS 2 CURSOS COM MAIOR BÔNUS)
-function renderMascotQuickBar() {
-    dom.mascotQuickBar.innerHTML = '';
+// Apenas os jogos com maior bônus aparecem no aviso, com links de navegação.
+function renderPayoutNotice() {
+    dom.payoutGames.innerHTML = '';
     const { boostedIds } = getBoostedSectorsState();
-
-    Object.values(MASCOTS_CATALOG).forEach(sec => {
-        const isActive = sec.id === currentSector.id;
-        const isBoosted = boostedIds.includes(sec.id);
-        const btn = document.createElement('button');
-        
-        let bgClass = 'bg-[#280508]/90 text-yellow-200/80 border-amber-900/60 hover:text-white hover:border-yellow-400/60';
-        if (isActive) {
-            bgClass = 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 text-slate-950 border-yellow-200 shadow-[0_0_12px_rgba(250,204,21,0.7)] scale-105 font-black';
-        } else if (isBoosted) {
-            bgClass = 'bg-red-950/90 text-yellow-300 border-yellow-500/80 shadow-[0_0_10px_rgba(234,179,8,0.35)]';
+    boostedIds.forEach((id, index) => {
+        if (index > 0) dom.payoutGames.append(' e ');
+        const sector = MASCOTS_CATALOG[id];
+        const item = document.createElement(id === currentSector.id ? 'span' : 'a');
+        item.textContent = `${sector.icon} ${sector.mascotName}`;
+        if (id === currentSector.id) {
+            item.append(' (você está aqui)');
+        } else {
+            item.href = getSectorUrl(id);
+            item.dataset.gameLink = '';
+            item.setAttribute('aria-disabled', String(isSpinning));
         }
-
-        btn.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${bgClass}`;
-        
-        const thumb = sec.image 
-            ? `<img src="${sec.image}" class="w-5 h-5 rounded-full object-cover border ${isBoosted ? 'border-yellow-400 ring-1 ring-red-500' : 'border-yellow-400/80'}">` 
-            : `<span>${sec.icon}</span>`;
-
-        const boostBadge = isBoosted 
-            ? `<span class="bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow animate-pulse">🔥 3.5x</span>` 
-            : `<span class="opacity-60 text-[10px]">1.8x</span>`;
-
-        btn.innerHTML = `${thumb} <span>${sec.mascotName.split(' ')[0]}</span> ${boostBadge}`;
-        btn.addEventListener('click', () => switchSector(sec.id));
-        dom.mascotQuickBar.appendChild(btn);
+        dom.payoutGames.appendChild(item);
     });
 }
 
-// ALTERNA SETOR DINAMICAMENTE
-function switchSector(sectorId) {
-    if (isSpinning) return;
-    currentSector = MASCOTS_CATALOG[sectorId] || currentSector;
-    
-    // Atualiza URL sem recarregar a página
-    const newUrl = `${window.location.pathname}?setor=${currentSector.id}`;
-    window.history.pushState({ path: newUrl }, '', newUrl);
-
-    // Atualiza textos
-    dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
-    updateBonusPillUI();
-    dom.sectorDesc.innerText = currentSector.incentiveText;
-    dom.mascotName.innerText = currentSector.mascotName;
-    
-    // Aplica tema
-    applySectorTheme(currentSector);
-    renderMascotQuickBar();
-
-    // Multiplicador do setor com rotação dos 2 maiores a cada 30min
-    multiplier = getSectorCurrentBonus(currentSector);
-    updateUI();
-    initGrid();
-    showMessage(`Atlética ativa: ${currentSector.athleticName}!`, 'bg-slate-800', currentSector.theme.titleColor);
-}
+// Evita sair do jogo antes de terminar um giro ou a sequência de bônus.
+document.addEventListener('click', (event) => {
+    if (isSpinning && event.target.closest('a[data-game-link]')) event.preventDefault();
+});
 
 // RESOLUÇÃO DE SETOR / MASCOTE VIA URL
 function initSector() {
     const urlParams = new URLSearchParams(window.location.search);
-    const param = urlParams.get('setor') || urlParams.get('mascote');
+    const param = urlParams.get('setor') || urlParams.get('sector') || urlParams.get('mascote');
     currentSector = getSectorConfig(param);
 
     dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
@@ -272,7 +269,8 @@ function initSector() {
     dom.mascotName.innerText = currentSector.mascotName;
     
     applySectorTheme(currentSector);
-    renderMascotQuickBar();
+    renderPayoutNotice();
+    document.title = `${currentSector.mascotName} - Desafio das Atléticas UENP`;
 
     multiplier = getSectorCurrentBonus(currentSector);
     updateUI();
@@ -338,6 +336,7 @@ function updateUI() {
         }
         AuthStore.saveUser(currentUser);
     }
+    updatePrizeNotice();
     
     if (multiplier > 1) {
         dom.multiBox.classList.add('border-yellow-400', 'shadow-[0_0_15px_rgba(250,204,21,0.4)]');
@@ -357,6 +356,9 @@ function showMessage(text, bgClass = '', textClass = '') {
 
 function lockControls(lock) {
     isSpinning = lock;
+    document.querySelectorAll('a[data-game-link]').forEach(link => {
+        link.setAttribute('aria-disabled', String(lock));
+    });
     if (lock) {
         dom.spinBtn.classList.add('opacity-50', 'pointer-events-none');
         dom.betBtns.forEach(b => b.classList.add('opacity-50', 'pointer-events-none'));
@@ -608,6 +610,34 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
 
 // RENDERIZAÇÃO E ATUALIZAÇÃO DO RANKING
 const esc = s => String(s).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';');
+function updatePrizeNotice() {
+    if (AppMode.localDemo) {
+        dom.prizeStatus.textContent = 'Teste local: a pontuação não participa da premiação oficial.';
+        dom.competitionStatus.textContent = 'Teste local';
+        return;
+    }
+    const competition = RankingService.competition;
+    const winner = competition?.winner;
+    if (competition?.status === 'closed' && winner) {
+        const reason = competition.reason === 'target' ? 'Meta de 1 bilhão confirmada' : 'Maior recorde no encerramento';
+        dom.prizeStatus.textContent = currentUser && winner.nickname === currentUser.nickname
+            ? `🎉 Você venceu com ${winner.score.toLocaleString('pt-BR')} pontos! ${reason}. A organização poderá entrar em contato pelo telefone cadastrado.`
+            : `🏆 ${winner.nickname} venceu com ${winner.score.toLocaleString('pt-BR')} pontos. ${reason}.`;
+        dom.competitionStatus.textContent = `🏆 Vencedor: ${winner.nickname}`;
+    } else if (competition?.status === 'closed') {
+        dom.prizeStatus.textContent = 'A organização encerrou a competição sem recordes elegíveis. Não houve vencedor. Você pode continuar jogando e sincronizando o ranking geral.';
+        dom.competitionStatus.textContent = 'Competição encerrada';
+    } else if (currentUser && currentUser.highScore >= 1000000000) {
+        dom.prizeStatus.textContent = 'Você atingiu ou ultrapassou 1 bilhão no aparelho! Aguardando confirmação do servidor. Somente pontos confirmados antes do encerramento concorrem ao prêmio.';
+        dom.competitionStatus.textContent = '1 bilhão local · pendente';
+    } else {
+        dom.prizeStatus.textContent = competition
+            ? 'Competição aberta na última consulta. Vale seu maior recorde confirmado até o encerramento, mesmo que o saldo diminua. A meta antecipada é 1 bilhão.'
+            : 'Conecte-se para consultar a competição. Recordes locais precisam ser confirmados pelo servidor antes do encerramento.';
+        dom.competitionStatus.textContent = competition ? 'Meta: 1 bilhão' : 'Premiação · aguardando servidor';
+    }
+}
+
 function renderRanking(list) {
     dom.rankingList.innerHTML = '';
     const items = (list && list.length > 0) ? list : RankingService.getRanking(currentUser, currentSector);
@@ -615,6 +645,7 @@ function renderRanking(list) {
 
     items.forEach((item, index) => {
         const isMe = currentUser && currentUser.nickname.toLowerCase() === item.nickname.toLowerCase();
+        const isOnline = RankingService.connectionState === 'online' && item.online;
         if (isMe) myPosition = index + 1;
 
         const row = document.createElement('div');
@@ -629,7 +660,7 @@ function renderRanking(list) {
         row.innerHTML = `
             <div class="flex items-center gap-2">
                 <span class="w-6 text-center font-black">${medal}</span>
-                <span title="${item.online ? 'online' : 'offline'}" class="text-[8px]">${item.online ? '🟢' : '⚪'}</span>
+                <span title="${isOnline ? 'online' : 'sem confirmação de conexão'}" class="text-[8px]">${isOnline ? '🟢' : '⚪'}</span>
                 <span class="text-xl">${esc(item.icon || '🎓')}</span>
                 <div>
                     <div class="font-bold flex items-center gap-1 text-yellow-200">
@@ -645,18 +676,15 @@ function renderRanking(list) {
         dom.rankingList.appendChild(row);
     });
 
-    const syncEl = document.getElementById('ranking-sync-indicator');
-    if (syncEl) syncEl.innerText = `🟢 ${RankingService.onlineCount} online`;
+    updateRankingConnectionIndicator();
     dom.myRankIndicator.innerText = myPosition ? `Sua posição: #${myPosition}` : 'Sua posição: Fora do top';
 }
 
 // RENDERIZAÇÃO DO MODAL DE QR CODES
 function renderQrCodesModal() {
     dom.qrcodesList.innerHTML = '';
-    const currentBaseUrl = window.location.origin + window.location.pathname;
-
     Object.values(MASCOTS_CATALOG).forEach(sector => {
-        const targetUrl = `${currentBaseUrl}?setor=${sector.id}`;
+        const targetUrl = getSectorUrl(sector.id);
         const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
         const mascotBadge = sector.image 
             ? `<img src="${sector.image}" class="w-8 h-8 rounded-full object-cover border border-yellow-400">`
@@ -674,29 +702,46 @@ function renderQrCodesModal() {
                         <p class="text-[10px] text-yellow-200/60">${sector.sectorName}</p>
                     </div>
                 </div>
-                <p class="text-[11px] font-semibold my-1 ${sector.theme.titleColor}">${sector.mascotName} (${sector.baseBonus}x de incentivo)</p>
+                <p class="text-[11px] font-semibold my-1 ${sector.theme.titleColor}">${sector.mascotName} (${getSectorCurrentBonus(sector).toFixed(1)}x de incentivo)</p>
                 <div class="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                    <button onclick="switchSector('${sector.id}'); dom.qrcodesModal.classList.add('hidden');" class="bg-gradient-to-r from-emerald-600 to-green-700 hover:brightness-110 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow">
+                    <a href="${esc(targetUrl)}" data-game-link aria-disabled="${isSpinning}" class="bg-gradient-to-r from-emerald-600 to-green-700 hover:brightness-110 text-white font-bold px-3 py-1 rounded-lg text-[11px] shadow">
                         Jogar nesta Atlética
-                    </button>
-                    <button onclick="navigator.clipboard.writeText('${targetUrl}'); alert('Link copiado!');" class="bg-[#3b080d] hover:bg-[#4d0c12] text-yellow-200 px-3 py-1 rounded-lg text-[11px] border border-amber-800">
+                    </a>
+                    <button data-copy-link class="bg-[#3b080d] hover:bg-[#4d0c12] text-yellow-200 px-3 py-1 rounded-lg text-[11px] border border-amber-800">
                         Copiar Link
                     </button>
                 </div>
             </div>
         `;
+        card.querySelector('[data-copy-link]').addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            try {
+                await navigator.clipboard.writeText(targetUrl);
+                button.textContent = 'Link copiado!';
+            } catch {
+                showMessage('Não foi possível copiar. Abra o jogo e copie o endereço do navegador.');
+            }
+        });
         dom.qrcodesList.appendChild(card);
     });
 }
 
-// CONTROLES DE MODAIS E TESTES
-const testCardBtn = document.getElementById('test-card-btn');
-if (testCardBtn) {
-    testCardBtn.addEventListener('click', async () => {
-        if (isSpinning) return;
-        await triggerMascotBuff();
-    });
+// O dialog nativo gerencia foco, teclado e retorno ao botão de informações.
+function openInformation() {
+    updatePrizeNotice();
+    if (!dom.infoPanel.open) dom.infoPanel.showModal();
 }
+
+function showInitialGuidance() {
+    if (!currentUser || !AuthStore.shouldShowGuidance(currentUser)) return;
+    // Primeiro persiste por conta; recarregar ou trocar o mascote não repete o painel.
+    AuthStore.markGuidanceSeen(currentUser.id);
+    openInformation();
+}
+
+dom.openInfoBtn.addEventListener('click', openInformation);
+dom.closeInfoBtn.addEventListener('click', () => dom.infoPanel.close());
+dom.infoUnderstoodBtn.addEventListener('click', () => dom.infoPanel.close());
 
 dom.openRankingBtn.addEventListener('click', () => {
     renderRanking(RankingService.getRanking(currentUser, currentSector));
@@ -711,28 +756,109 @@ dom.openQrcodesBtn.addEventListener('click', () => {
 });
 dom.closeQrcodesBtn.addEventListener('click', () => dom.qrcodesModal.classList.add('hidden'));
 
+function updateRankingConnectionIndicator() {
+    const indicator = document.getElementById('ranking-sync-indicator');
+    if (!indicator) return;
+    indicator.innerText = AppMode.localDemo ? '🧪 Somente neste navegador'
+        : RankingService.connectionState === 'online' ? `🟢 ${RankingService.onlineCount} online`
+        : RankingService.connectionState === 'syncing' ? '🔄 Sincronizando'
+        : '💾 Ranking salvo no aparelho';
+}
+
+function renderConnectionStatus(state) {
+    const offlineDescription = AppMode.localDemo
+        ? 'Continue jogando. O saldo de teste fica salvo apenas neste navegador.'
+        : 'Continue jogando. O saldo fica salvo neste aparelho e os pontos serão enviados quando o servidor voltar.';
+    const messages = {
+        checking: ['Verificando conexão...', 'Você pode jogar enquanto verificamos o servidor.'],
+        syncing: ['🔄 Sincronizando com o servidor', 'Atualizando o ranking e enviando os pontos salvos no aparelho.'],
+        online: ['🟢 Online · servidor conectado', 'Os pontos são sincronizados automaticamente.'],
+        offline: ['🟠 Offline · sem internet', offlineDescription],
+        'server-unavailable': ['🟠 Sem comunicação com o servidor', offlineDescription + ' Nova tentativa automática em até 30 segundos.'],
+        'auth-required': ['Servidor conectado · entre novamente', 'Sua sessão expirou. Entre novamente para enviar os pontos salvos.'],
+        'local-demo': ['🧪 Teste local · sem sincronização', 'Os pontos deste modo ficam apenas neste navegador.']
+    };
+    const [title, description] = messages[state] || messages.checking;
+    const compactLabels = {
+        checking: 'Verificando...', syncing: '🔄 Sincronizando', online: '🟢 Online',
+        offline: '🟠 Offline', 'server-unavailable': '🔴 Servidor indisponível',
+        'auth-required': 'Entre novamente', 'local-demo': '🧪 Teste local'
+    };
+    const indicator = document.getElementById('connection-notice');
+    indicator.dataset.state = state;
+    indicator.textContent = compactLabels[state] || compactLabels.checking;
+    indicator.title = title + '. ' + description;
+    document.getElementById('connection-title').textContent = title;
+    document.getElementById('connection-description').textContent = description;
+    updateRankingConnectionIndicator();
+    if (!dom.rankingModal.classList.contains('hidden')) {
+        renderRanking(RankingService.getRanking(currentUser, currentSector));
+    }
+}
+
+// A mensagem de pronto só aparece depois de o worker conferir o cache completo.
+async function initOfflineCache() {
+    const label = document.getElementById('offline-cache-status');
+    if (window.location.protocol === 'file:') {
+        label.textContent = 'Os arquivos do jogo estão incluídos neste aplicativo.';
+        return;
+    }
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+        label.textContent = 'Cache offline indisponível neste navegador. Mantenha o jogo aberto ao desconectar.';
+        return;
+    }
+    const serviceWorker = navigator.serviceWorker;
+    let cacheReady = false;
+    serviceWorker.addEventListener('message', event => {
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v10') return;
+        cacheReady = event.data.ready;
+        label.textContent = cacheReady
+            ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'
+            : 'Arquivos offline incompletos. Conecte-se e atualize a página para prepará-los.';
+    });
+    const check = worker => {
+        if (worker) worker.postMessage({ type: 'CHECK_OFFLINE_CACHE' });
+    };
+    serviceWorker.addEventListener('controllerchange', () => check(serviceWorker.controller));
+    try {
+        const registration = await serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+        const watch = worker => {
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+                if (worker.state === 'activated') check(worker);
+                if (worker.state === 'redundant' && !cacheReady) {
+                    label.textContent = 'Falha ao preparar o modo offline. Conecte-se e atualize a página.';
+                }
+            });
+        };
+        watch(registration.installing);
+        registration.addEventListener('updatefound', () => watch(registration.installing));
+        check(registration.active);
+        serviceWorker.ready.then(ready => check(ready.active));
+    } catch {
+        label.textContent = 'Não foi possível preparar o modo offline. Use HTTPS ou localhost e tente novamente.';
+    }
+}
+
 // INICIALIZAÇÃO DA ROTAÇÃO AUTOMÁTICA DE 30 MINUTOS
 function initBonusRotation() {
-    const { cycleIndex } = getBoostedSectorsState();
+    const { cycleIndex, timeFormatted } = getBoostedSectorsState();
     lastKnownCycleIndex = cycleIndex;
+    dom.payoutCountdown.textContent = timeFormatted;
 
     setInterval(() => {
         const state = getBoostedSectorsState();
         updateBonusPillUI();
+        dom.payoutCountdown.textContent = state.timeFormatted;
 
         // Quando virar a janela de 30 minutos
         if (state.cycleIndex !== lastKnownCycleIndex) {
             lastKnownCycleIndex = state.cycleIndex;
-            const sec1 = MASCOTS_CATALOG[state.boostedIds[0]];
-            const sec2 = MASCOTS_CATALOG[state.boostedIds[1]];
-            
-            renderMascotQuickBar();
-            multiplier = getSectorCurrentBonus(currentSector);
-            updateUI();
-
-            const n1 = sec1 ? (sec1.athleticName || sec1.mascotName) : state.boostedIds[0];
-            const n2 = sec2 ? (sec2.athleticName || sec2.mascotName) : state.boostedIds[1];
-            showMessage(`⚡ ROTAÇÃO DE 30 MIN: ${n1} e ${n2} receberam o MAIOR BÔNUS (+250%)!`, "bg-amber-900/95", "text-yellow-300");
+            renderPayoutNotice();
+            if (!isSpinning) {
+                multiplier = getSectorCurrentBonus(currentSector);
+                updateUI();
+            }
         }
     }, 1000);
 }
@@ -743,15 +869,25 @@ initSector();
 initGrid();
 updateBetUI();
 initBonusRotation();
+showInitialGuidance();
 dom.spinBtn.addEventListener('click', playNormalSpin);
 
 // Sincronização periódica do Ranking (a cada 30 segundos)
 RankingService.onUnauthorized = () => dom.logoutBtn.click(); // sessão expirada
+RankingService.onConnectionChange = renderConnectionStatus;
+RankingService.onScoreConfirmed = (userId, receipt) => {
+    if (receipt.guidanceSeen) AuthStore.markGuidanceSeen(userId, true);
+};
+renderConnectionStatus(AppMode.localDemo ? 'local-demo' : 'checking');
 RankingService.startPeriodicSync((updatedList) => {
+    updatePrizeNotice();
     if (!dom.rankingModal.classList.contains('hidden')) {
         renderRanking(updatedList);
     }
-}, () => currentUser && currentUser.token && { token: currentUser.token, nickname: currentUser.nickname, score: balance, sector: currentSector.sectorName, icon: currentSector.icon });
+}, () => currentUser && (currentUser.token || (AppMode.localDemo && currentUser.isDemo)) && {
+    id: currentUser.id, token: currentUser.token, nickname: currentUser.nickname,
+    score: Math.max(balance, currentUser.highScore || 0), sector: currentSector.sectorName, icon: currentSector.icon,
+    guidanceSeen: AuthStore.guidanceFor(currentUser.id).seen === true
+});
 
-
-
+initOfflineCache();
