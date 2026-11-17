@@ -31,7 +31,6 @@
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
                 <input type="text" id="login-input" placeholder="Apelido (só no 1º acesso)" maxlength="20"
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <p class="text-[11px] text-yellow-100/80 leading-snug">🏆 O primeiro jogador a atingir 1.000.000 de pontos ganha o prêmio! Cadastre seu telefone com DDD corretamente: o número será salvo para a organização entrar em contato com o vencedor.</p>
                 <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
                 <button type="submit" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-[0_4px_0_#78350f] border border-yellow-200 transition-all">
                     ENTRAR E JOGAR
@@ -98,8 +97,42 @@
         </div>
     </div>
 
-    <!-- CONTA E AVISOS DOS JOGOS -->
-    <div class="w-full max-w-md md:max-w-lg mb-1 sm:mb-2 flex flex-col gap-1 px-1">
+    <!-- INFORMAÇÕES: consulta manual e apresentação única para contas novas -->
+    <dialog id="info-panel" aria-labelledby="info-title" class="info-panel ornamental-modal-card">
+        <header class="info-panel-header">
+            <h2 id="info-title">Informações do jogo</h2>
+            <button id="close-info-btn" type="button" aria-label="Fechar informações">✕</button>
+        </header>
+        <div class="info-panel-content">
+            <section id="prize-notice" class="game-notice prize-notice" aria-label="Premiação de um bilhão de pontos">
+                <h3>🏆 Premiação</h3>
+                <p>O primeiro a atingir ou ultrapassar <strong>1.000.000.000 de pontos confirmados pelo servidor</strong> vence antecipadamente.</p>
+                <p>Se a organização encerrar antes, vence o maior <strong>recorde confirmado</strong>, mesmo que o saldo atual seja menor. Em empate, vence quem confirmou esse recorde primeiro no servidor.</p>
+                <p>Fechar o jogo não encerra a competição. Pontos offline recebidos após o encerramento ficam no ranking geral, mas não alteram o vencedor.</p>
+                <p class="game-notice-detail">Seu telefone cadastrado fica privado para contato da organização.</p>
+                <p id="prize-status" role="status" aria-live="polite"></p>
+            </section>
+            <section id="payout-notice" class="game-notice" aria-label="Jogos com maior bônus">
+                <h3>🔥 Jogos com maior bônus</h3>
+                <p id="payout-games"></p>
+                <p>Bônus de 3,5x em pontos. Os demais jogos têm 1,8x. Próxima rotação em <span id="payout-countdown" class="font-mono">--:--</span>.</p>
+            </section>
+            <section class="game-notice" aria-label="Conexão e funcionamento offline">
+                <h3 id="connection-title">Verificando conexão...</h3>
+                <p id="connection-description">Você pode jogar enquanto verificamos o servidor.</p>
+                <p id="offline-cache-status" class="game-notice-detail">Preparando arquivos para jogar offline...</p>
+                <p class="game-notice-detail">A primeira entrada exige internet. Depois de preparar o cache, você pode jogar offline e trocar de mascote. Os recordes são enviados ao reconectar; vale a ordem de confirmação do servidor.</p>
+            </section>
+            <section id="demo-notice" class="game-notice" hidden>
+                <h3>🧪 Modo de teste local</h3>
+                <p>Sem telefone ou PIN. Saldo e ranking ficam só neste navegador e não participam da premiação oficial.</p>
+            </section>
+        </div>
+        <button id="info-understood-btn" type="button" class="info-understood-btn">Entendi, vamos jogar</button>
+    </dialog>
+
+    <!-- CONTA E CONTROLES: no fluxo da página, sem sobrepor os giros -->
+    <div class="game-toolbar w-full max-w-md md:max-w-lg mb-1 sm:mb-2 flex flex-col gap-1 px-1">
         <div class="flex items-center justify-between text-[11px] sm:text-xs gap-1">
             <div class="flex items-center gap-1.5 sm:gap-2">
                 <span class="bg-[#240407] text-yellow-300 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-amber-800 font-black flex items-center gap-1 shadow">
@@ -107,10 +140,7 @@
                 </span>
                 <button id="logout-btn" title="Trocar jogador" class="text-amber-400/80 hover:text-red-400 min-h-[30px] sm:min-h-[36px] px-1 transition-colors underline font-bold flex items-center">Sair</button>
             </div>
-            <div class="flex gap-1 sm:gap-1.5">
-                <button id="test-card-btn" class="bg-gradient-to-r from-amber-600 to-yellow-600 hover:brightness-110 text-white border border-yellow-300/60 px-2 py-1 sm:px-2.5 min-h-[30px] sm:min-h-[36px] rounded-lg font-black flex items-center gap-1 shadow text-xs active:scale-95 transition-transform">
-                    ✨ Relíquia
-                </button>
+            <div class="toolbar-actions flex gap-1 sm:gap-1.5">
                 <button id="open-ranking-btn" class="bg-[#240407] hover:bg-[#38070b] text-yellow-300 border border-amber-800 px-2 py-1 sm:px-2.5 min-h-[30px] sm:min-h-[36px] rounded-lg font-bold flex items-center gap-1 shadow text-xs active:scale-95 transition-transform">
                     🏆 Ranking
                 </button>
@@ -120,27 +150,14 @@
                 <button id="install-btn" hidden class="bg-[#240407] hover:bg-[#38070b] text-sky-300 border border-amber-800 px-2 py-1 sm:px-2.5 min-h-[30px] sm:min-h-[36px] rounded-lg font-bold items-center gap-1 shadow text-xs active:scale-95 transition-transform">
                     ⬇️ Baixar app
                 </button>
+                <button id="open-info-btn" type="button" class="info-button" aria-label="Abrir informações e regras" aria-haspopup="dialog" aria-controls="info-panel">ⓘ</button>
             </div>
         </div>
 
-        <aside id="connection-notice" class="game-notice connection-notice" data-state="checking" role="status" aria-live="polite" aria-atomic="true">
-            <strong id="connection-title">Verificando conexão...</strong>
-            <p id="connection-description" class="game-notice-detail">Você pode jogar enquanto verificamos o servidor.</p>
-            <p id="offline-cache-status" class="game-notice-detail">Preparando arquivos para jogar offline...</p>
-        </aside>
-        <aside id="demo-notice" class="game-notice" hidden>
-            <strong>🧪 Modo de teste local</strong>
-            <p class="game-notice-detail">Sem telefone ou PIN. Saldo e ranking ficam só neste navegador e não participam da premiação oficial.</p>
-        </aside>
-        <aside id="payout-notice" class="game-notice" aria-label="Jogos com maior bônus">
-            <p>🔥 Pagando mais agora: <span id="payout-games"></span></p>
-            <p class="game-notice-detail">Bônus de 3,5x em pontos. Troque pelo link. Próxima rotação em <span id="payout-countdown" class="font-mono">--:--</span>.</p>
-        </aside>
-        <aside id="prize-notice" class="game-notice prize-notice" aria-label="Desafio de um milhão de pontos">
-            <p>🏆 Primeiro a <strong>1.000.000 de pontos</strong> ganha o prêmio!</p>
-            <p class="game-notice-detail">Cadastre seu telefone com DDD para receber o prêmio. O número do vencedor fica salvo com a organização.</p>
-            <p id="prize-status" class="game-notice-detail" role="status" aria-live="polite"></p>
-        </aside>
+        <div class="game-status-row">
+            <span id="connection-notice" class="connection-indicator" data-state="checking" role="status" aria-live="polite" aria-atomic="true">Verificando...</span>
+            <span id="competition-status" class="competition-indicator" role="status" aria-live="polite">Meta: 1 bilhão</span>
+        </div>
     </div>
 
     <!-- MÁQUINA DE SLOT ESTILO FORTUNE TIGER -->

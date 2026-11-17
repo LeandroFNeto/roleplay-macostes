@@ -73,26 +73,58 @@ a[data-game-link][aria-disabled="true"] {
     border-color: #047857;
 }
 
-.connection-notice[data-state="online"] {
+.connection-indicator[data-state="online"] {
     border-color: #10b981;
 }
 
-.connection-notice[data-state="offline"] {
+.connection-indicator[data-state="offline"] {
     border-color: #f59e0b;
 }
 
-.connection-notice[data-state="server-unavailable"],
-.connection-notice[data-state="auth-required"] {
+.connection-indicator[data-state="server-unavailable"],
+.connection-indicator[data-state="auth-required"] {
     border-color: #fb7185;
 }
 
-.connection-notice[data-state="syncing"],
-.connection-notice[data-state="checking"] {
+.connection-indicator[data-state="syncing"],
+.connection-indicator[data-state="checking"] {
     border-color: #38bdf8;
 }
 
 #prize-status:empty {
     display: none;
+}
+
+.game-toolbar > div:first-child, .toolbar-actions { flex-wrap: wrap; }
+#ui-username { max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+.toolbar-actions { justify-content: flex-end; }
+.game-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.connection-indicator, .competition-indicator {
+    border: 1px solid #92400e; border-radius: 999px; padding: 3px 8px;
+    font-size: 10px; line-height: 1.4; background: #240407; overflow-wrap: anywhere;
+}
+.competition-indicator { color: #fde68a; }
+.info-button {
+    min-width: 36px; min-height: 36px; border: 1px solid #92400e;
+    border-radius: 9px; background: #240407; color: #fde68a; font-size: 22px;
+}
+.info-button:focus-visible, .info-panel button:focus-visible { outline: 2px solid #facc15; outline-offset: 2px; }
+dialog.info-panel {
+    width: min(440px, calc(100vw - 24px)); max-height: 85dvh;
+    margin: auto;
+    padding: 16px; border: 2px solid #d4af37; border-radius: 20px; color: #fef08a;
+    overflow-y: auto; overscroll-behavior: contain;
+}
+.info-panel::backdrop { background: rgb(0 0 0 / 85%); backdrop-filter: blur(4px); }
+.info-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.info-panel-header h2 { font-size: 17px; font-weight: 900; }
+.info-panel-header button { min-width: 40px; min-height: 40px; }
+.info-panel-content { display: grid; gap: 10px; }
+.info-panel-content h3 { font-weight: 900; margin-bottom: 4px; }
+.info-panel-content p + p { margin-top: 6px; }
+.info-understood-btn {
+    width: 100%; margin-top: 14px; min-height: 44px; border-radius: 10px;
+    background: #fbbf24; color: #240407; font-weight: 900;
 }
 
 /* Ambientação com partículas de ouro sutis */
