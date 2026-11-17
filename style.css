@@ -853,3 +853,8 @@ body::before {
         font-size: 1rem !important;
     }
 }
+
+.menu-item{background:#240407;border:1px solid #92400e;border-radius:.75rem;padding:.75rem;min-height:44px;font-weight:700;text-align:left;display:flex;gap:.25rem}
+.menu-item[hidden]{display:none}
+#side-menu.open{transform:translateX(0)}
+

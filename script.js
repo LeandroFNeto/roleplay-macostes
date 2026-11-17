@@ -265,6 +265,8 @@ function initSector() {
 
     dom.sectorBadge.innerText = currentSector.athleticName || currentSector.sectorName;
     updateBonusPillUI();
+    const mascotBtn = document.getElementById('open-mascot-btn');
+    mascotBtn.innerHTML = currentSector.image ? `<img src="${esc(currentSector.image)}" alt="" class="w-full h-full object-cover">` : esc(currentSector.icon);
     dom.sectorDesc.innerText = currentSector.incentiveText;
     dom.mascotName.innerText = currentSector.mascotName;
     
@@ -755,6 +757,44 @@ dom.openQrcodesBtn.addEventListener('click', () => {
     dom.qrcodesModal.classList.remove('hidden');
 });
 dom.closeQrcodesBtn.addEventListener('click', () => dom.qrcodesModal.classList.add('hidden'));
+
+// MENU LATERAL
+const sideMenu = document.getElementById('side-menu');
+const menuBackdrop = document.getElementById('side-menu-backdrop');
+function toggleMenu(open) {
+    sideMenu.classList.toggle('open', open);
+    menuBackdrop.classList.toggle('hidden', !open);
+}
+document.getElementById('open-menu-btn').addEventListener('click', () => toggleMenu(true));
+document.getElementById('close-menu-btn').addEventListener('click', () => toggleMenu(false));
+menuBackdrop.addEventListener('click', () => toggleMenu(false));
+sideMenu.addEventListener('click', (e) => { if (e.target.closest('.menu-item')) toggleMenu(false); });
+
+// TROCAR MASCOTE: lista ordenada pelo maior bônus atual
+const mascotModal = document.getElementById('mascot-modal');
+document.getElementById('open-mascot-btn').addEventListener('click', () => {
+    const list = document.getElementById('mascot-list');
+    list.innerHTML = '';
+    Object.values(MASCOTS_CATALOG)
+        .sort((a, b) => getSectorCurrentBonus(b) - getSectorCurrentBonus(a))
+        .forEach(sector => {
+            const bonus = getSectorCurrentBonus(sector);
+            const here = sector.id === currentSector.id;
+            const item = document.createElement(here ? 'div' : 'a');
+            if (!here) { item.href = getSectorUrl(sector.id); item.dataset.gameLink = ''; }
+            item.className = `flex items-center gap-3 p-2.5 rounded-xl border ${here ? 'border-yellow-400 bg-amber-900/40' : 'border-amber-900/50 bg-[#240407]/90'}`;
+            item.innerHTML = `
+                ${sector.image ? `<img src="${esc(sector.image)}" alt="" class="w-10 h-10 rounded-full object-cover border border-yellow-400">` : `<span class="text-2xl">${esc(sector.icon)}</span>`}
+                <div class="flex-1 min-w-0">
+                    <div class="font-black text-yellow-200 text-sm truncate">${esc(sector.mascotName)}${here ? ' (atual)' : ''}</div>
+                    <div class="text-[10px] text-yellow-200/60 truncate">${esc(sector.athleticName || sector.sectorName)}</div>
+                </div>
+                <span class="font-black text-xs px-2 py-0.5 rounded-full ${bonus === BOOSTED_BONUS_VALUE ? 'bg-gradient-to-r from-red-600 to-yellow-500 text-white' : 'bg-[#3a060a] text-yellow-300'}">${bonus === BOOSTED_BONUS_VALUE ? '🔥 ' : ''}${bonus.toFixed(1)}x</span>`;
+            list.appendChild(item);
+        });
+    mascotModal.classList.remove('hidden');
+});
+document.getElementById('close-mascot-btn').addEventListener('click', () => mascotModal.classList.add('hidden'));
 
 function updateRankingConnectionIndicator() {
     const indicator = document.getElementById('ranking-sync-indicator');
