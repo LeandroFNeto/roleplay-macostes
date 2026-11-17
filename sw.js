@@ -1,6 +1,6 @@
 ﻿importScripts('./mascots-config.js');
 
-const CACHE_NAME = 'atleticas-v11';
+const CACHE_NAME = 'atleticas-v12';
 const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',

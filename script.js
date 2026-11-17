@@ -1,4 +1,4 @@
-﻿// ESTADO DO JOGO
+// ESTADO DO JOGO
 let currentUser = null;
 let currentSector = null;
 let balance = 5000;
@@ -19,14 +19,14 @@ const dom = {
     multiplier: document.getElementById('ui-multiplier'),
     multiLabel: document.getElementById('ui-multi-label'),
     multiBox: document.getElementById('multiplier-box'),
-    bonusAlert: document.getElementById('bonus-alert'),
-    bonusCount: document.getElementById('ui-bonus-count'),
     msgBox: document.getElementById('message-box'),
     spinBtn: document.getElementById('spin-btn'),
     betBtns: document.querySelectorAll('.bet-btn'),
     overlay: document.getElementById('bonus-overlay'),
     overlayTitle: document.getElementById('overlay-title'),
     overlayMultiText: document.getElementById('overlay-multi-text'),
+    overlayPrize: document.getElementById('overlay-prize'),
+    overlayMascot: document.getElementById('overlay-mascot'),
     mascotImg: document.getElementById('sector-mascot-img'),
     mascotName: document.getElementById('sector-mascot-name'),
     sectorBadge: document.getElementById('sector-badge'),
@@ -219,6 +219,8 @@ function getSectorCurrentBonus(sector) {
 function updateBonusPillUI() {
     if (!currentSector || !dom.sectorPill) return;
     const { boostedIds, timeFormatted } = getBoostedSectorsState();
+    const payers = document.getElementById('top-payers');
+    if (payers) payers.textContent = '· 🔥 Paga mais: ' + boostedIds.map(id => MASCOTS_CATALOG[id].mascotName).join(' e ');
     const isBoosted = boostedIds.includes(currentSector.id);
     const bonus = getSectorCurrentBonus(currentSector);
     const bonusPercent = Math.round((bonus - 1) * 100);
@@ -538,14 +540,13 @@ async function playNormalSpin() {
         
         let initialMulti = Math.round(finalSpinMultiplier);
         maxMultiplier = 15;
-        let titleText = "BÔNUS WIN!";
+        let titleText = ["WIN BÔNUS", "SUPER WIN", "MEGA WIN", "SUPER MEGA WIN"][Math.min(linesCount, 4) - 1];
         let multiText = `Multiplicador ${initialMulti}x!`;
         let titleColor = "from-green-400 via-yellow-400 to-green-500";
         
         if (linesCount >= 2) {
             initialMulti = Math.round(finalSpinMultiplier * 2);
             maxMultiplier = 25;
-            titleText = "SUPER BÔNUS!";
             multiText = `Multiplicador ${initialMulti}x!`;
             titleColor = "from-yellow-400 via-orange-400 to-red-500";
         }
@@ -553,7 +554,7 @@ async function playNormalSpin() {
         showMessage(`+${prize} PTS! Bônus de ${currentSector.sectorName} ativado!`, "bg-green-900", "text-green-300");
         await delay(1500); 
         
-        await runBonusSession(initialMulti, titleText, multiText, titleColor);
+        await runBonusSession(initialMulti, titleText, multiText, titleColor, prize);
     } else {
         showMessage("Quase! O mascote está torcendo por você.", "bg-slate-800", "text-slate-300");
     }
@@ -562,9 +563,10 @@ async function playNormalSpin() {
 }
 
 // SESSÃO DE BÔNUS
-async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
+async function runBonusSession(initialMulti, titleText, multiText, titleColor, prize = 0) {
     dom.overlayTitle.innerText = titleText;
-    dom.overlayTitle.className = `text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br ${titleColor} drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)] mb-4`;
+    dom.overlayPrize.innerText = prize.toLocaleString();
+    dom.overlayMascot.src = currentSector.image || '';
     dom.overlayMultiText.innerText = multiText;
     
     dom.overlay.classList.remove('hidden');
@@ -574,12 +576,12 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
     multiplier = initialMulti;
     updateUI();
     
-    dom.bonusAlert.classList.remove('hidden');
-    dom.spinBtn.innerText = "RODANDO AUTO...";
-    dom.spinBtn.className = "w-full font-black text-2xl sm:text-3xl py-4 rounded-2xl transition-all flex items-center justify-center gap-2 mt-1 shadow-lg bg-gradient-to-r from-purple-600 to-indigo-700 text-white animate-pulse";
+    dom.multiBox.classList.add('bonus-on');
+    const normalSpinClass = dom.spinBtn.className;
+    dom.spinBtn.className = "w-full font-black text-lg sm:text-2xl py-2 sm:py-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 shadow-lg bg-purple-700 border border-purple-400 text-white";
 
     for (let i = 10; i >= 1; i--) {
-        dom.bonusCount.innerText = i;
+        dom.spinBtn.innerText = `🎰 RODADA AUTO ${11 - i}/10`;
         showMessage(`Rodada Bônus ${11 - i} de 10`, "bg-purple-900/50", "text-purple-300");
         
         await animateSpin();
@@ -601,7 +603,8 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor) {
         }
     }
 
-    dom.bonusAlert.classList.add('hidden');
+    dom.multiBox.classList.remove('bonus-on');
+    dom.spinBtn.className = normalSpinClass;
     multiplier = getSectorCurrentBonus(currentSector);
     updateUI();
     
@@ -850,7 +853,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v11') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v12') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'

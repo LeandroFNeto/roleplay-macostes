@@ -86,17 +86,15 @@
         </div>
     </div>
 
-    <!-- OVERLAY BÔNUS WIN GIGANTE -->
-    <div id="bonus-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity">
-        <div class="text-center overlay-enter p-4">
-            <h1 id="overlay-title" class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-green-400 via-yellow-400 to-green-500 drop-shadow-[0_5px_10px_rgba(0,0,0,0.8)] mb-4">
-                BÔNUS WIN!
-            </h1>
-            <p id="overlay-subtitle" class="text-3xl md:text-5xl font-black text-white mb-6">10 RODADAS AUTOMÁTICAS</p>
-            <p id="overlay-multi-text" class="text-xl md:text-3xl text-yellow-300 font-bold bg-slate-800/80 inline-block px-8 py-3 rounded-full border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.5)]">Multiplicador inicial 2x!</p>
+    <!-- OVERLAY WIN: mascote do setor, título dourado e prêmio -->
+    <div id="bonus-overlay" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm">
+        <div class="win-card overlay-enter">
+            <img id="overlay-mascot" alt="" class="win-mascot">
+            <h1 id="overlay-title" class="win-title">BÔNUS WIN!</h1>
+            <p id="overlay-prize" class="win-prize">0</p>
+            <p id="overlay-multi-text" class="win-ribbon">Multiplicador 2x!</p>
         </div>
     </div>
-
     <!-- INFORMAÇÕES: consulta manual e apresentação única para contas novas -->
     <dialog id="info-panel" aria-labelledby="info-title" class="info-panel ornamental-modal-card">
         <header class="info-panel-header">
@@ -160,17 +158,14 @@
     </div>
 
     <!-- BARRA SUPERIOR: menu, status e mascote atual -->
-    <div class="game-toolbar w-full max-w-md md:max-w-lg mb-1 sm:mb-2 flex flex-col gap-1 px-1">
-        <div class="flex items-center justify-between gap-2">
-            <button id="open-menu-btn" type="button" aria-label="Abrir menu" aria-controls="side-menu" class="bg-[#240407] text-yellow-300 border border-amber-800 w-10 h-10 rounded-lg text-xl shadow active:scale-95">☰</button>
-            <button id="open-mascot-btn" type="button" aria-label="Trocar mascote" class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-[#240407] overflow-hidden shadow active:scale-95 flex items-center justify-center text-xl"></button>
-        </div>
-        <div class="game-status-row">
+    <div class="game-toolbar w-full max-w-md md:max-w-lg mb-1 flex items-center justify-between gap-2 px-1">
+        <button id="open-menu-btn" type="button" aria-label="Abrir menu" aria-controls="side-menu" class="bg-[#240407] text-yellow-300 border border-amber-800 w-10 h-10 shrink-0 rounded-lg text-xl shadow active:scale-95">☰</button>
+        <div class="game-status-row justify-center">
             <span id="connection-notice" class="connection-indicator" data-state="checking" role="status" aria-live="polite" aria-atomic="true">Verificando...</span>
             <span id="competition-status" class="competition-indicator" role="status" aria-live="polite">Meta: 1 bilhão</span>
         </div>
+        <button id="open-mascot-btn" type="button" aria-label="Trocar mascote" class="w-10 h-10 shrink-0 rounded-full border-2 border-yellow-400 bg-[#240407] overflow-hidden shadow active:scale-95 flex items-center justify-center text-xl"></button>
     </div>
-
     <!-- MÁQUINA DE SLOT ESTILO FORTUNE TIGER -->
     <main id="machine-wrapper" class="w-full max-w-md md:max-w-lg machine-container rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
         
@@ -193,6 +188,7 @@
                 <span id="sector-badge" class="stage-balcony-text font-black text-[10px] sm:text-[11px] uppercase truncate">
                     Ciência da Computação
                 </span>
+                <span id="top-payers" class="stage-balcony-text font-black text-[9px] sm:text-[10px] truncate ml-1"></span>
                 <span id="sector-mascot-name" class="hidden"></span>
                 <span id="sector-incentive-desc" class="hidden"></span>
             </div>
@@ -235,13 +231,6 @@
         <!-- PARTE INFERIOR: PONTUAÇÃO LEVADA PARA BAIXO (ESTILO FORTUNE TIGER COMPACTO) -->
         <div class="px-2.5 sm:px-4 pb-2.5 sm:pb-3.5 flex flex-col gap-1.5 sm:gap-2">
             
-            <!-- ALERTA DE RODADAS DO BÔNUS -->
-            <div id="bonus-alert" class="hidden bg-gradient-to-r from-green-600 to-emerald-600 p-1.5 sm:p-2 rounded-xl text-center border-2 border-green-400 shadow-[0_0_15px_rgba(52,211,153,0.5)] animate-pulse">
-                <p class="text-xs sm:text-sm font-black text-white uppercase tracking-widest">
-                    Rodada Bônus: <span id="ui-bonus-count" class="text-yellow-300 text-lg sm:text-xl ml-1">10</span> / 10
-                </p>
-            </div>
-
             <!-- PAINEL DE PONTUAÇÃO COMPACTO -->
             <section class="grid grid-cols-2 gap-1.5 text-center" aria-label="Status do Jogador">
                 <div class="ornamental-panel py-1 px-2.5 flex items-center justify-between sm:flex-col sm:justify-center">
