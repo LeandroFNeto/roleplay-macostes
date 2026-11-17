@@ -13,19 +13,22 @@ test('integração: script Lua real em Redis isolado', {
     const db = testRedis(process.env.REDIS_TEST_URL);
     try { await run(db); } finally { await db.cleanup(); }
   });
-  await scenario('um milhão não vence; atingir exatamente um bilhão encerra', async db => {
-    assert.equal((await submit(db, 'Ana', 1000000)).state.status, 'open');
-    assert.equal((await submit(db, 'Ana', 999999999)).state.status, 'open');
-    const { state } = await submit(db, 'Ana', 1000000000);
-    assert.equal(state.winner.score, 1000000000);
-    assert.equal(state.reason, 'target');
+  await scenario('qualquer pontuação mantém a competição aberta até a organização encerrar', async db => {
+    for (const score of [1000000, 999999999, 1000000000, 1250000000, Number.MAX_SAFE_INTEGER]) {
+      const { state } = await submit(db, 'Ana', score);
+      assert.equal(state.status, 'open');
+      assert.equal(state.winner, null);
+      assert.equal(state.leader.score, score);
+    }
   });
-  await scenario('ultrapassar a meta em uma jogada aceita até o maior inteiro seguro sem arredondar', async db => {
+  await scenario('aceita até o maior inteiro seguro sem arredondar ou antecipar o resultado', async db => {
     const { state } = await submit(db, 'Ana', Number.MAX_SAFE_INTEGER);
-    assert.equal(state.winner.score, Number.MAX_SAFE_INTEGER);
+    assert.equal(state.status, 'open');
+    assert.equal(state.winner, null);
+    assert.equal((await competitionOperation(db, 'close')).state.winner.score, Number.MAX_SAFE_INTEGER);
     assert.equal(decodeRecord(await db.hget(keys.generalRecords, 'Ana')).score, Number.MAX_SAFE_INTEGER);
   });
-  await scenario('encerramento sem meta usa recorde, não o saldo mais recente; empates pela primeira confirmação', async db => {
+  await scenario('encerramento usa recorde, não o saldo mais recente; empates pela primeira confirmação', async db => {
     await submit(db, 'Ana', 800000000);
     await submit(db, 'Bia', 800000000);
     await submit(db, 'Ana', 5000);
@@ -58,9 +61,9 @@ test('integração: script Lua real em Redis isolado', {
   });
   await scenario('envios concorrentes e reenvios escolhem exatamente um vencedor imutável', async db => {
     const results = await Promise.all(Array.from({ length: 40 }, (_, i) => submit(db, `player-${i}`, 1000000000 + i)));
-    const winners = new Set(results.map(result => result.state.winner.nickname));
-    assert.equal(winners.size, 1);
-    const frozen = (await competitionOperation(db, 'snapshot')).state;
+    assert.ok(results.every(result => result.state.status === 'open' && result.state.winner === null));
+    const frozen = (await competitionOperation(db, 'close')).state;
+    assert.equal(frozen.winner.nickname, 'player-39');
     await Promise.all(Array.from({ length: 20 }, () => submit(db, frozen.winner.phone, frozen.winner.score)));
     assert.deepEqual((await competitionOperation(db, 'close')).state, frozen);
   });
@@ -96,13 +99,43 @@ test('integração: script Lua real em Redis isolado', {
     await db.hset(keys.generalRecords, 'Aline', { nickname: 'Aline', score: 900000000, updatedAt: 100 });
     assert.equal((await competitionOperation(db, 'close')).state.winner.nickname, 'Aline');
   });
-  await scenario('recordes legados na meta não são apagados e elegem um único vencedor na migração', async db => {
-    await db.hset(keys.generalRecords, 'Bia', { nickname: 'Bia', score: 1000000000, updatedAt: 200 });
+  await scenario('recordes antigos elevados não encerram a competição durante a migração', async db => {
+    await db.hset(keys.generalRecords, 'Bia', { nickname: 'Bia', score: 1500000000, updatedAt: 200 });
     await db.hset(keys.generalRecords, 'Ana', { nickname: 'Ana', score: 1000000000, updatedAt: 100 });
     const result = await competitionOperation(db, 'snapshot');
-    assert.equal(result.state.winner.nickname, 'Ana');
-    assert.equal(result.state.reason, 'target');
-    assert.equal((await submit(db, 'Outra', 1250000000)).state.winner.nickname, 'Ana');
+    assert.equal(result.state.status, 'open');
+    assert.equal(result.state.winner, null);
+    assert.equal(result.state.leader.nickname, 'Bia');
+    assert.equal((await competitionOperation(db, 'close')).state.winner.nickname, 'Bia');
+  });
+  await scenario('resultado automático da versão anterior fica preservado e não fecha a nova competição', async db => {
+    const record = { phone: 'Ana', nickname: 'Ana', score: '1000000000', achievedAt: 100, sequence: 1 };
+    const previous = { version: 2, status: 'closed', reason: 'target', openedAt: 50,
+      closedAt: 100, closeSequence: 1, winner: record, leader: record };
+    await db.set(keys.previousState, previous);
+    await db.hset(keys.previousRecords, 'Ana', record);
+    await db.hset(keys.generalRecords, 'Ana', { ...record, score: 1000000000 });
+    await db.hset(keys.generalRecords, 'Bia', { nickname: 'Bia', score: 1500000000, achievedAt: 200 });
+    const { state } = await competitionOperation(db, 'snapshot');
+    assert.equal(state.status, 'open');
+    assert.equal(state.winner, null);
+    assert.equal((await competitionOperation(db, 'close')).state.winner.nickname, 'Bia');
+    assert.deepEqual(await db.get(keys.previousState), previous);
+  });
+  await scenario('migração respeita encerramento global já feito pela organização e exclui pontos tardios', async db => {
+    const record = { phone: 'Ana', nickname: 'Ana', score: '800000000', achievedAt: 100, sequence: 7 };
+    const previous = { version: 2, status: 'closed', reason: 'organization', openedAt: 50,
+      closedAt: 200, closeSequence: 8, winner: record, leader: record };
+    await db.set(keys.previousState, previous);
+    await db.hset(keys.previousRecords, 'Ana', record);
+    await db.hset(keys.generalRecords, 'Ana', { ...record, score: 1500000000 });
+    const result = await submit(db, 'Ana', 2000000000);
+    assert.equal(result.state.status, 'closed');
+    assert.equal(result.state.winner.score, 800000000);
+    assert.equal(result.state.closedAt, 200);
+    assert.equal(result.receipt.eligibleScore, 800000000);
+    assert.equal(result.receipt.confirmedScore, 2000000000);
+    assert.deepEqual(await db.get(keys.previousState), previous);
   });
   await scenario('confirmação das orientações é idempotente, por conta, inclusive após encerramento', async db => {
     await competitionOperation(db, 'close');

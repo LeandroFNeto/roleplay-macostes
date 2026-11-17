@@ -617,18 +617,15 @@ function updatePrizeNotice() {
     const competition = RankingService.competition;
     const winner = competition?.winner;
     if (competition?.status === 'closed' && winner) {
-        const reason = competition.reason === 'target' ? 'Meta de 1 bilhão confirmada' : 'Maior recorde no encerramento';
         dom.prizeStatus.textContent = currentUser && winner.nickname === currentUser.nickname
-            ? `🎉 Você venceu com ${winner.score.toLocaleString('pt-BR')} pontos! ${reason}. A organização poderá entrar em contato pelo telefone cadastrado.`
-            : `🏆 ${winner.nickname} venceu com ${winner.score.toLocaleString('pt-BR')} pontos. ${reason}.`;
+            ? `🎉 Você venceu com ${winner.score.toLocaleString('pt-BR')} pontos! Ficou no topo do ranking no encerramento do aplicativo pela organização. A organização poderá entrar em contato pelo telefone cadastrado.`
+            : `🏆 ${winner.nickname} venceu com ${winner.score.toLocaleString('pt-BR')} pontos, no topo do ranking no encerramento do aplicativo pela organização.`;
     } else if (competition?.status === 'closed') {
         dom.prizeStatus.textContent = 'A organização encerrou a competição sem recordes elegíveis. Não houve vencedor. Você pode continuar jogando e sincronizando o ranking geral.';
-    } else if (currentUser && currentUser.highScore >= 1000000000) {
-        dom.prizeStatus.textContent = 'Você atingiu ou ultrapassou 1 bilhão no aparelho! Aguardando confirmação do servidor. Somente pontos confirmados antes do encerramento concorrem ao prêmio.';
     } else {
         dom.prizeStatus.textContent = competition
-            ? 'Competição aberta na última consulta. Vale seu maior recorde confirmado até o encerramento, mesmo que o saldo diminua. A meta antecipada é 1 bilhão.'
-            : 'Conecte-se para consultar a competição. Recordes locais precisam ser confirmados pelo servidor antes do encerramento.';
+            ? 'Competição aberta na última consulta. Quem estiver no topo do ranking quando a organização encerrar o aplicativo ganha. Vale o maior recorde confirmado pelo servidor até esse momento.'
+            : 'Conecte-se para consultar o ranking. Quem estiver no topo no encerramento do aplicativo pela organização ganha. Recordes locais precisam ser confirmados pelo servidor antes do encerramento.';
     }
 }
 
@@ -806,7 +803,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v11') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v12') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'

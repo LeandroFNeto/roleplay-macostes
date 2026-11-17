@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  COMPETITION_KEYS, COMPETITION_TARGET, createCompetition, validateScore,
+  COMPETITION_KEYS, COMPETITION_RULE, createCompetition, validateScore,
   encodeRecord, decodeRecord, encodeCompetition, decodeCompetition,
   publicCompetition, publicWinner, scoreReceipt,
 } from './api/_competition-model.mjs';
@@ -15,9 +15,10 @@ const privateRecord = (score = 800_000_000) => ({
 test('estado inicial aberto não depende do vencedor legado', () => {
   assert.notEqual(COMPETITION_KEYS.state, COMPETITION_KEYS.legacyPrize);
   assert.notEqual(COMPETITION_KEYS.records, COMPETITION_KEYS.generalRecords);
+  assert.notEqual(COMPETITION_KEYS.state, COMPETITION_KEYS.previousState);
   const state = createCompetition(100);
   assert.deepEqual(publicCompetition(state), {
-    status: 'open', target: COMPETITION_TARGET, openedAt: 100,
+    status: 'open', rule: COMPETITION_RULE, openedAt: 100,
     closedAt: null, reason: null, winner: null,
   });
   assert.deepEqual(decodeCompetition(encodeCompetition(state)), state);
@@ -25,13 +26,14 @@ test('estado inicial aberto não depende do vencedor legado', () => {
 });
 
 test('resultado fechado expõe somente os campos públicos do vencedor', () => {
-  for (const reason of ['target', 'organization']) {
-    const winner = privateRecord(reason === 'target' ? 1_250_000_000 : 800_000_000);
+  for (const score of [1_250_000_000, 800_000_000]) {
+    const reason = 'organization';
+    const winner = privateRecord(score);
     const state = { ...createCompetition(100), status: 'closed', closedAt: 200,
       closeSequence: 2, reason, leader: winner, winner, adminToken: 'segredo' };
     const result = publicCompetition(encodeCompetition(state));
     assert.deepEqual(result, {
-      status: 'closed', target: COMPETITION_TARGET, openedAt: 100,
+      status: 'closed', rule: COMPETITION_RULE, openedAt: 100,
       closedAt: 200, reason,
       winner: { nickname: 'Jogador', score: winner.score, achievedAt: 123 },
     });
@@ -51,7 +53,7 @@ test('competição pode encerrar sem participantes e sem vencedor', () => {
 });
 
 test('scores inteiros sobrevivem à serialização exata e à leitura legada', () => {
-  for (const score of [0, 1_000_000, COMPETITION_TARGET, 1_250_000_000,
+  for (const score of [0, 1_000_000, 2_000_000_000, 1_250_000_000,
     Number.MAX_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER]) {
     const record = privateRecord(score);
     const encoded = encodeRecord(record);

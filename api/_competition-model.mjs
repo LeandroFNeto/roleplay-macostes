@@ -1,11 +1,13 @@
 // Modelo compartilhado pela migração e pelas operações atômicas da competição.
 // Não abre uma competição automaticamente: a migração publica o estado inicial.
-export const COMPETITION_TARGET = 1_000_000_000;
+export const COMPETITION_RULE = 'ranking-at-close';
 export const COMPETITION_KEYS = Object.freeze({
-  state: 'competition:v2:state',
-  records: 'competition:v2:records',
-  sequence: 'competition:v2:sequence',
-  migration: 'competition:v2:migration',
+  state: 'competition:v3:state',
+  records: 'competition:v3:records',
+  sequence: 'competition:v3:sequence',
+  migration: 'competition:v3:migration',
+  previousState: 'competition:v2:state',
+  previousRecords: 'competition:v2:records',
   generalRecords: 'ranking:players',
   legacyPrize: 'prize:first-million',
 });
@@ -43,9 +45,9 @@ export function decodeRecord(value) {
 export function createCompetition(openedAt) {
   if (!Number.isSafeInteger(openedAt) || openedAt < 0) throw new TypeError('Data invalida.');
   return {
-    version: 2,
+    version: 3,
     status: 'open',
-    target: COMPETITION_TARGET,
+    rule: COMPETITION_RULE,
     openedAt,
     closedAt: null,
     closeSequence: null,
@@ -66,8 +68,8 @@ export function encodeCompetition(state) {
 export function decodeCompetition(value) {
   if (value === null || value === undefined) throw new Error('Competicao ainda nao migrada.');
   const state = typeof value === 'string' ? JSON.parse(value) : value;
-  if (!state || state.version !== 2 || !['open', 'closed'].includes(state.status)
-      || state.target !== COMPETITION_TARGET) {
+  if (!state || state.version !== 3 || !['open', 'closed'].includes(state.status)
+      || state.rule !== COMPETITION_RULE) {
     throw new TypeError('Estado de competicao invalido.');
   }
   return { ...state, leader: decodeRecord(state.leader), winner: decodeRecord(state.winner) };
@@ -87,7 +89,7 @@ export function publicCompetition(value) {
   const state = decodeCompetition(value);
   return {
     status: state.status,
-    target: state.target,
+    rule: state.rule,
     openedAt: state.openedAt,
     closedAt: state.closedAt,
     reason: state.reason,

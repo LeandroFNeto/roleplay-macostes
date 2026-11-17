@@ -3,7 +3,7 @@ const RankingService = {
     STORAGE_KEY: AppMode.localDemo ? 'tigrinho_demo_ranking' : 'tigrinho_global_ranking',
     OFFLINE_PENDING_KEY: AppMode.localDemo ? 'tigrinho_demo_pending_score' : 'tigrinho_offline_pending_score',
     LAST_SYNC_KEY: AppMode.localDemo ? 'tigrinho_demo_last_sync' : 'tigrinho_ranking_last_sync',
-    COMPETITION_KEY: 'tigrinho_competition_v2',
+    COMPETITION_KEY: 'tigrinho_competition_v3',
     PENDING_BY_USER_KEY: 'tigrinho_pending_by_account',
     DEFAULT_API_URL: '/api/ranking',
     onlineCount: 0,
@@ -35,7 +35,7 @@ const RankingService = {
     },
 
     rememberCompetition(data) {
-        if (!data?.competition || !['open', 'closed'].includes(data.competition.status)) return;
+        if (data?.competition?.rule !== 'ranking-at-close' || !['open', 'closed'].includes(data.competition.status)) return;
         this.competition = data.competition;
         this.prizeWinner = this.competition.winner || null;
         localStorage.setItem(this.COMPETITION_KEY, JSON.stringify(this.competition));

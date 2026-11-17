@@ -87,18 +87,19 @@ A aplicação inclui um gerador/visualizador interno de QR Codes para testes e i
 
 Cada link abre o jogo do respectivo mascote. A conta, o saldo e o recorde são compartilhados entre os links no mesmo navegador. Os parâmetros antigos `sector` e `mascote` continuam aceitos.
 
-Acesse o botão **🔔 Notificações**, com o mesmo estilo dos botões Ranking e QR Codes, para ver a conexão, os links dos dois jogos com maior bônus e as regras. Cada jogo bonificado mostra seu multiplicador de **3,5x**. A rotação ocorre a cada **30 minutos**; os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus. A relíquia continua sendo ativada automaticamente pelos giros, sem botão de teste manual. A meta não ocupa mais a barra do jogo; as regras de premiação permanecem no painel.
+Acesse o botão **🔔 Notificações**, com o mesmo estilo dos botões Ranking e QR Codes, para ver a conexão, os links dos dois jogos com maior bônus e as regras. Cada jogo bonificado mostra seu multiplicador de **3,5x**. A rotação ocorre a cada **30 minutos**; os demais ficam com **1,8x**. A troca fica bloqueada durante giros e rodadas automáticas de bônus. A relíquia continua sendo ativada automaticamente pelos giros, sem botão de teste manual. As regras e o resultado da premiação ficam no painel.
 
-### Premiação: recorde confirmado e meta de 1 bilhão
+### Premiação: topo do ranking no encerramento
 
-O primeiro jogador a **atingir ou ultrapassar 1.000.000.000 de pontos confirmados pelo servidor** vence antecipadamente. Se a organização encerrar antes, vence quem tiver o **maior recorde confirmado até o encerramento**, independentemente do saldo atual. Em empate, vence quem confirmou aquele recorde primeiro no servidor. A ordem é dada por uma sequência Redis, inclusive para confirmações no mesmo milissegundo.
+**Quem estiver no topo do ranking quando o aplicativo for encerrado pela organização ganha.** Vale o **maior recorde confirmado pelo servidor até o encerramento**, independentemente do saldo atual. Nenhuma pontuação encerra a competição automaticamente. Em empate, vence quem confirmou aquele recorde primeiro no servidor. A ordem é dada por uma sequência Redis, inclusive para confirmações no mesmo milissegundo.
 
 - Fechar uma aba ou aplicativo **não encerra a competição**. Somente a organização pode executar `POST /api/competition` com a ação `close` e seu segredo administrativo.
 - Um único script Lua (`EVAL`) atualiza o máximo pessoal, o recorde elegível e o vencedor no Redis. Envios simultâneos, heartbeats e reenvios não reduzem recordes nem substituem o resultado fechado.
 - Pontos offline recebidos **depois** do encerramento atualizam o ranking geral e o recorde pessoal, mas **não participam do prêmio nem alteram o vencedor**. Vale a confirmação no servidor, sem confiar no relógio do aparelho. A interface conserva a última confirmação disponível offline.
 - Se não houver nenhum recorde elegível, a competição encerra sem vencedor. Não há reabertura automática.
-- A migração é automática e atômica no primeiro acesso à nova API. Preserva `ranking:players` e a chave histórica `prize:first-million`, que deixa de decidir a premiação. Recordes anteriores já confirmados também participam, sem exigir novo login. Como a API antiga não registrava a hora exata do recorde, a migração usa `achievedAt`, quando disponível, ou `updatedAt`; em empate desse horário, usa o identificador privado estável da conta. Na ausência de horários, considera o instante da migração. Se já houver recordes na meta, o primeiro por essa ordem vence na migração. Os novos envios são ordenados pela sequência Redis.
-- A API aceita inteiros de `0` a `Number.MAX_SAFE_INTEGER` (`9.007.199.254.740.991`), incluindo ultrapassar 1 bilhão em uma jogada. Os valores são guardados como strings decimais dentro do JSON Redis para evitar arredondamento do Lua/cjson e retornados como números na API.
+- A migração é automática e atômica no primeiro acesso à API v3. Preserva `ranking:players` e os registros privados das premiações anteriores. Os recordes já confirmados participam sem exigir novo login. Resultados automáticos antigos ficam somente no histórico; um encerramento global já feito pela organização permanece válido, com seu vencedor e seus recordes elegíveis congelados.
+- A ordem original de confirmação é preservada quando disponível. Para registros antigos sem sequência, a migração usa `achievedAt` ou `updatedAt`; em empate desse horário, usa o identificador privado estável da conta. Sem horários, considera o instante da migração. Os novos envios são ordenados pela sequência Redis, e a ordem pública dos empates acompanha o mesmo critério da premiação.
+- A API aceita inteiros de `0` a `Number.MAX_SAFE_INTEGER` (`9.007.199.254.740.991`). Os valores são guardados como strings decimais dentro do JSON Redis para evitar arredondamento do Lua/cjson e retornados como números na API. Esse limite é de precisão numérica, sem relação com a escolha do vencedor.
 - O telefone fica somente nos dados privados da organização. A API pública usa uma lista explícita de campos permitidos. Como antes, os pontos são calculados pelo cliente: confirmação autenticada não equivale a validação dos giros contra fraude.
 
 ### Orientações e conexão
@@ -134,7 +135,7 @@ $env:REDIS_TEST_URL = 'redis://127.0.0.1:6379'
 npm run test:redis
 ```
 
-Ela cobre atingir/ultrapassar 1 bilhão, encerramento pelo maior recorde, empates, recordes simultâneos, reenvios, corrida entre encerramento e envio, migração e pontos offline tardios. Sem `REDIS_TEST_URL`, essa suíte é indicada como pendente, sem simular o comportamento do Redis. Use uma instância de desenvolvimento, nunca credenciais de produção.
+Ela cobre permanência da competição aberta para qualquer pontuação válida, encerramento pelo maior recorde, empates, recordes simultâneos, reenvios, corrida entre encerramento e envio, migração e pontos offline tardios. Sem `REDIS_TEST_URL`, essa suíte é indicada como pendente, sem simular o comportamento do Redis. Use uma instância de desenvolvimento, nunca credenciais de produção.
 
 O workflow de testes do GitHub Actions cria seu próprio Redis descartável e roda a suíte completa em pushes e pull requests.
 

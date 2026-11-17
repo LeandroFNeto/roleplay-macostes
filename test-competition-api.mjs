@@ -44,7 +44,7 @@ export async function invoke(handler, req) {
   return res;
 }
 
-test('API exige sessão e inteiros seguros sem truncar, converter strings ou limitar a um bilhão', async () => {
+test('API exige sessão e inteiros seguros sem impor uma pontuação para vitória', async () => {
   const calls = [];
   const db = {
     async eval(script, keys, args) {
@@ -64,6 +64,9 @@ test('API exige sessão e inteiros seguros sem truncar, converter strings ou lim
     const res = await api.request('POST', score, '43999990000', 'Ana');
     assert.equal(res.statusCode, 200);
     assert.equal(res.data.confirmedScore, score);
+    assert.equal(res.data.competition.winner, null);
+    assert.equal(res.data.competition.rule, 'ranking-at-close');
+    assert.equal(res.data.competition.target, undefined);
     const call = calls.at(-1);
     assert.equal(call.script, store.COMPETITION_SCRIPT);
     assert.ok(call.keys.includes(model.COMPETITION_KEYS.state));
@@ -97,7 +100,7 @@ test('encerramento exige segredo da organização e não é acessível pela sess
 test('API pública usa allowlist para ranking, vencedor e competição', async () => {
   const privateRecord = { phone: '43999990000', token: 'private-token', nickname: 'Ana',
     score: '1250000000', achievedAt: 2, lastSeen: Date.now(), sector: 'Computação', icon: '🐗' };
-  const state = { ...model.createCompetition(1), status: 'closed', reason: 'target',
+  const state = { ...model.createCompetition(1), status: 'closed', reason: 'organization',
     winner: privateRecord, leader: privateRecord, closedAt: 2 };
   const api = handlers({ async eval() { return { state }; }, async hgetall() { return { '43999990000': privateRecord }; } });
   const response = await api.request('GET');
@@ -116,6 +119,20 @@ test('falhas de Redis retornam indisponibilidade, sem anunciar vencedor', async 
   assert.equal(result.statusCode, 503);
   assert.equal(result.data.prizeWinner, undefined);
   assert.equal((await api.close()).statusCode, 503);
+});
+
+test('a ordem pública dos empates acompanha a sequência de confirmação usada para o prêmio', () => {
+  const records = {
+    A: { nickname: 'Ana', score: 5000, achievedAt: 100, lastSeen: 100 },
+    B: { nickname: 'Bia', score: 5000, achievedAt: 100, lastSeen: 100 },
+  };
+  const eligible = {
+    A: { ...records.A, sequence: 2 },
+    B: { ...records.B, sequence: 1 },
+  };
+  const players = store.publicPlayers(records, 100, eligible);
+  assert.deepEqual(players.map(player => player.nickname), ['Bia', 'Ana']);
+  assert.equal(players[0].sequence, undefined);
 });
 
 test('login persiste orientações por conta no servidor e não força aviso para contas legadas', async () => {

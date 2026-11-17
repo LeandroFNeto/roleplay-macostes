@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="assets/mascots/computacao-javali.png">
     <script src="tailwind.cdn.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=11">
+    <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body id="app-body" class="min-h-[100dvh] flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-950 text-slate-100 transition-colors duration-500">
 
@@ -115,11 +115,11 @@
                 <p id="payout-games"></p>
                 <p>Bônus de 3,5x em pontos. Os demais jogos têm 1,8x. Próxima rotação em <span id="payout-countdown" class="font-mono">--:--</span>.</p>
             </section>
-            <section id="prize-notice" class="game-notice prize-notice" aria-label="Premiação de um bilhão de pontos">
+            <section id="prize-notice" class="game-notice prize-notice" aria-label="Premiação pelo topo do ranking">
                 <h3>🏆 Premiação</h3>
-                <p>O primeiro a atingir ou ultrapassar <strong>1.000.000.000 de pontos confirmados pelo servidor</strong> vence antecipadamente.</p>
-                <p>Se a organização encerrar antes, vence o maior <strong>recorde confirmado</strong>, mesmo que o saldo atual seja menor. Em empate, vence quem confirmou esse recorde primeiro no servidor.</p>
-                <p>Fechar o jogo não encerra a competição. Pontos offline recebidos após o encerramento ficam no ranking geral, mas não alteram o vencedor.</p>
+                <p><strong>Quem estiver no topo do ranking quando o aplicativo for encerrado pela organização ganha!</strong></p>
+                <p>Vale o maior <strong>recorde confirmado pelo servidor até o encerramento</strong>, mesmo que o saldo atual seja menor. Em empate, vence quem confirmou esse recorde primeiro.</p>
+                <p>O encerramento é global, feito pela organização. Fechar sua aba ou sair do aplicativo não encerra a competição. Pontos offline recebidos após o encerramento ficam no ranking geral, mas não alteram o vencedor.</p>
                 <p class="game-notice-detail">Seu telefone cadastrado fica privado para contato da organização.</p>
                 <p id="prize-status" role="status" aria-live="polite"></p>
             </section>
@@ -274,8 +274,8 @@
     <script src="app-mode.js"></script>
     <script src="mascots-config.js"></script>
     <script src="auth-store.js"></script>
-    <script src="ranking-service.js"></script>
-    <script src="script.js?v=11" defer></script>
+    <script src="ranking-service.js?v=12"></script>
+    <script src="script.js?v=12" defer></script>
     <script>
         // Botao "Baixar app": prompt nativo (Android/Chrome) ou instrucao manual (iOS).
         (() => {

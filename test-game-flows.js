@@ -99,13 +99,14 @@ test('o aviso mostra só os dois jogos com maior bônus e preserva o bônus de u
     assert.match(elements.get('payout-countdown').textContent, /^\d{2}:\d{2}$/);
 });
 
-test('um milhão não vence; um bilhão local aguarda confirmação; só o servidor anuncia vitória', () => {
+test('pontuação local nunca anuncia vitória; ganha o topo confirmado no encerramento pela organização', () => {
     const { context, elements } = loadGame();
     vm.runInContext("currentUser = { nickname: 'Ana', highScore: 1000000 }; updatePrizeNotice();", context);
-    assert.doesNotMatch(elements.get('prize-status').textContent, /venceu|Você venceu|Aguardando confirmação/);
+    assert.doesNotMatch(elements.get('prize-status').textContent, /venceu|Você venceu|bilhão|antecipadamente/);
     vm.runInContext("currentUser.highScore = 1250000000; updatePrizeNotice();", context);
-    assert.match(elements.get('prize-status').textContent, /Aguardando confirmação/);
-    vm.runInContext("RankingService.competition = { status: 'closed', reason: 'target', winner: { nickname: 'Ana', score: 1250000000 } }; updatePrizeNotice();", context);
+    assert.match(elements.get('prize-status').textContent, /topo no encerramento/);
+    assert.doesNotMatch(elements.get('prize-status').textContent, /Você venceu|bilhão|antecipadamente/);
+    vm.runInContext("RankingService.competition = { rule: 'ranking-at-close', status: 'closed', reason: 'organization', winner: { nickname: 'Ana', score: 1250000000 } }; updatePrizeNotice();", context);
     assert.match(elements.get('prize-status').textContent, /Você venceu/);
     assert.equal(elements.has('competition-status'), false);
 });
@@ -118,7 +119,7 @@ test('o recorde offline é enviado após reabrir o jogo, mesmo com saldo menor',
     const sent = [];
     const online = loadService(localStorage, async (url, options) => {
         if (options.method === 'POST') sent.push(JSON.parse(options.body));
-        return { ok: true, json: async () => ({ players: [], competition: { status: 'closed', winner: { nickname: 'Ana' } } }) };
+        return { ok: true, json: async () => ({ players: [], competition: { rule: 'ranking-at-close', status: 'closed', winner: { nickname: 'Ana' } } }) };
     }).service;
     online.getMe = () => ({ id: 'usr_001', token: 'test', score: 700000 });
     await online.syncWithServer();
@@ -361,7 +362,7 @@ test('recordes pendentes de duas contas sobrevivem à troca de jogador e sincron
     const sent = [];
     const { service } = loadService(localStorage, async (url, options) => {
         if (options.method === 'POST') sent.push(JSON.parse(options.body));
-        return { ok: true, json: async () => ({ players: [], competition: { status: 'closed', winner: { nickname: 'Outra' } },
+        return { ok: true, json: async () => ({ players: [], competition: { rule: 'ranking-at-close', status: 'closed', winner: { nickname: 'Outra' } },
             confirmedScore: 900000000, eligibleScore: null, awardEligibility: 'closed' }) };
     });
     for (const id of ['A', 'B']) {
@@ -394,13 +395,26 @@ test('novo recorde durante envio não é removido pela resposta do envio anterio
 test('resultado confirmado da competição permanece disponível após reabrir offline', async () => {
     const localStorage = storage();
     const { service } = loadService(localStorage, async () => ({ ok: true,
-        json: async () => ({ players: [], competition: { status: 'closed', reason: 'organization', winner: { nickname: 'Ana', score: 900000000 } } }) }));
+        json: async () => ({ players: [], competition: { rule: 'ranking-at-close', status: 'closed', reason: 'organization', winner: { nickname: 'Ana', score: 900000000 } } }) }));
     await service.syncWithServer();
     const offline = loadService(localStorage, () => { throw Error('offline'); }, false).service;
     offline.startPeriodicSync(() => {}, () => null);
     await offline.syncWithServer();
     assert.equal(offline.competition.status, 'closed');
     assert.equal(offline.competition.winner.score, 900000000);
+});
+
+test('cache e respostas da regra antiga não anunciam um vencedor na regra atual', async () => {
+    const localStorage = storage();
+    const oldResult = { status: 'closed', reason: 'target', winner: { nickname: 'Antigo', score: 1000000000 } };
+    localStorage.setItem('tigrinho_competition_v2', JSON.stringify(oldResult));
+    const { service } = loadService(localStorage, () => { throw Error('offline'); }, false);
+    service.startPeriodicSync(() => {}, () => null);
+    await service.syncWithServer();
+    assert.equal(service.competition, null);
+    service.rememberCompetition({ competition: oldResult });
+    assert.equal(service.prizeWinner, null);
+    assert.equal(localStorage.getItem('tigrinho_competition_v2'), JSON.stringify(oldResult));
 });
 
 test('um giro mantém relíquia automática, pontuação bonificada e dez rodadas de bônus sem botão manual', async () => {

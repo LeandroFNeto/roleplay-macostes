@@ -8,7 +8,7 @@ export const GUIDANCE_KEY = 'accounts:guidance-seen:v1';
 // One EVAL serializes migration, personal maxima, tie order and closure.
 // Scores are decimal strings in JSON: Redis cjson otherwise rounds large integers.
 export const COMPETITION_SCRIPT = `
-local stateKey, recordsKey, sequenceKey, migrationKey, generalKey, guidanceKey = unpack(KEYS)
+local stateKey, recordsKey, sequenceKey, migrationKey, generalKey, guidanceKey, previousStateKey, previousRecordsKey = unpack(KEYS)
 local action, phone, nickname, scoreText, sector, icon, guidanceSeen = unpack(ARGV)
 local clock = redis.call('TIME')
 local now = tonumber(clock[1]) * 1000 + math.floor(tonumber(clock[2]) / 1000)
@@ -19,39 +19,63 @@ if rawState then
 else
   state = cjson.decode(ARGV[8])
   state.openedAt = now
+  local previousStateRaw = redis.call('GET', previousStateKey)
+  local previousState = previousStateRaw and cjson.decode(previousStateRaw) or nil
+  -- An organization closure remains final. Previous automatic outcomes stay in history.
+  local keepClosed = previousState and previousState.status == 'closed' and previousState.reason == 'organization'
+  if keepClosed then
+    local rule = state.rule
+    state = previousState
+    state.version, state.rule = 3, rule
+    state.target = nil
+  end
   -- Preserve every already-confirmed record as the initial eligible baseline.
-  -- The old API did not store record times; use the earliest available server metadata.
-  local previous = redis.call('HGETALL', generalKey)
+  -- For a closed event, preserve the eligible snapshot instead of importing late records.
+  local previous = redis.call('HGETALL', keepClosed and previousRecordsKey or generalKey)
   local baseline = {}
+  local lastSequence = keepClosed and tonumber(state.closeSequence) or 0
+  lastSequence = lastSequence or 0
+  redis.call('SET', sequenceKey, 0)
   for i = 1, #previous, 2 do
     local record = cjson.decode(previous[i + 1])
     local score = tonumber(record.score)
     if score and score >= 0 and score <= 9007199254740991 and score == math.floor(score) then
+      local metadata = record
+      if not keepClosed then
+        local oldRaw = redis.call('HGET', previousRecordsKey, previous[i])
+        local old = oldRaw and cjson.decode(oldRaw) or nil
+        if old and tonumber(old.score) == score then metadata = old end
+      end
       baseline[#baseline + 1] = {phone=previous[i], nickname=record.nickname,
         score=string.format('%.0f', score), sector=record.sector, icon=record.icon,
-        achievedAt=tonumber(record.achievedAt) or tonumber(record.updatedAt) or now, origin='migration'}
+        achievedAt=tonumber(metadata.achievedAt) or tonumber(record.updatedAt) or now,
+        sequence=tonumber(metadata.sequence), origin='migration'}
     end
   end
   table.sort(baseline, function(a, b)
-    if a.achievedAt == b.achievedAt then return a.phone < b.phone end
+    if a.achievedAt == b.achievedAt then
+      local aSequence, bSequence = a.sequence or 9007199254740991, b.sequence or 9007199254740991
+      if aSequence ~= bSequence then return aSequence < bSequence end
+      return a.phone < b.phone
+    end
     return a.achievedAt < b.achievedAt
   end)
   for _, record in ipairs(baseline) do
-    record.sequence = redis.call('INCR', sequenceKey)
+    if keepClosed then
+      record.sequence = record.sequence or (lastSequence + 1)
+      lastSequence = math.max(lastSequence, record.sequence)
+    else
+      record.sequence = redis.call('INCR', sequenceKey)
+    end
     redis.call('HSET', recordsKey, record.phone, cjson.encode(record))
-    if state.leader == cjson.null or tonumber(record.score) > tonumber(state.leader.score) then
+    if not keepClosed and (state.leader == cjson.null or tonumber(record.score) > tonumber(state.leader.score)) then
       state.leader = record
     end
-    if state.winner == cjson.null and tonumber(record.score) >= state.target then state.winner = record end
   end
-  if state.winner ~= cjson.null then
-    state.status, state.reason, state.closedAt = 'closed', 'target', now
-    state.closeSequence = state.winner.sequence
-    state.leader = state.winner
-  end
+  if keepClosed then redis.call('SET', sequenceKey, lastSequence) end
   redis.call('SET', stateKey, cjson.encode(state))
-  redis.call('SET', migrationKey, cjson.encode({version=2, migratedAt=now,
-    policy='preserve-confirmed-records', importedRecords=#baseline}))
+  redis.call('SET', migrationKey, cjson.encode({version=3, migratedAt=now,
+    policy='ranking-at-close', importedRecords=#baseline, preservedClosure=keepClosed or false}))
 end
 
 local general, eligible
@@ -82,11 +106,6 @@ if action == 'submit' then
       if state.leader == cjson.null or tonumber(eligible.score) > tonumber(state.leader.score) then
         state.leader = eligible
       end
-      if tonumber(eligible.score) >= state.target then
-        state.status, state.reason = 'closed', 'target'
-        state.closedAt, state.closeSequence = now, eligible.sequence
-        state.winner = eligible
-      end
     end
   end
   if guidanceSeen == '1' then redis.call('HSETNX', guidanceKey, phone, now) end
@@ -106,6 +125,7 @@ export async function competitionOperation(redis, action, player = {}) {
   const raw = await redis.eval(COMPETITION_SCRIPT, [
     COMPETITION_KEYS.state, COMPETITION_KEYS.records, COMPETITION_KEYS.sequence,
     COMPETITION_KEYS.migration, COMPETITION_KEYS.generalRecords, GUIDANCE_KEY,
+    COMPETITION_KEYS.previousState, COMPETITION_KEYS.previousRecords,
   ], [action, player.phone || '', player.nickname || '', String(player.score ?? 0),
     player.sector || '', player.icon || '', player.guidanceSeen === true ? '1' : '0',
     encodeCompetition(createCompetition(0))]);
@@ -119,11 +139,20 @@ export async function competitionOperation(redis, action, player = {}) {
   };
 }
 
-export function publicPlayers(records, now = Date.now()) {
-  return Object.values(records || {}).map(decodeRecord).map(record => ({
-    nickname: record.nickname, score: record.score, sector: record.sector,
-    icon: record.icon, updatedAt: record.updatedAt, achievedAt: record.achievedAt,
-    online: now - record.lastSeen < 75000,
-  })).sort((a, b) => b.score - a.score || (a.achievedAt || 0) - (b.achievedAt || 0)
-    || a.nickname.localeCompare(b.nickname));
+export function publicPlayers(records, now = Date.now(), eligibleRecords = {}) {
+  return Object.entries(records || {}).map(([id, value]) => {
+    const record = decodeRecord(value);
+    const eligible = decodeRecord(eligibleRecords?.[id]);
+    return {
+      sequence: eligible?.score === record.score ? eligible.sequence : Number.MAX_SAFE_INTEGER,
+      player: {
+        nickname: record.nickname, score: record.score, sector: record.sector,
+        icon: record.icon, updatedAt: record.updatedAt, achievedAt: record.achievedAt,
+        online: now - record.lastSeen < 75000,
+      },
+    };
+  }).sort((a, b) => b.player.score - a.player.score
+    || (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER)
+    || (a.player.achievedAt || 0) - (b.player.achievedAt || 0)
+    || a.player.nickname.localeCompare(b.player.nickname)).map(entry => entry.player);
 }

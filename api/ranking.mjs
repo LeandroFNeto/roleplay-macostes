@@ -28,7 +28,10 @@ export function createRankingHandler(db, sessionFor = getSession) {
         res.setHeader('Allow', 'GET, POST');
         return res.status(405).end();
       }
-      const players = publicPlayers(await db.hgetall(COMPETITION_KEYS.generalRecords));
+      const [generalRecords, eligibleRecords] = await Promise.all([
+        db.hgetall(COMPETITION_KEYS.generalRecords), db.hgetall(COMPETITION_KEYS.records),
+      ]);
+      const players = publicPlayers(generalRecords, Date.now(), eligibleRecords);
       const competition = publicCompetition(result.state);
       return res.status(200).json({
         players: players.slice(0, 50), online: players.filter(p => p.online).length,
