@@ -54,7 +54,8 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
     for (const bet of [50, 100]) betButtons.push({ ...element(), dataset: { bet: String(bet) } });
     const timers = [];
     const sounds = [];
-    const SoundManager = Object.fromEntries(['playClick', 'playBetSelect', 'startSpin', 'stopSpin', 'playWin', 'playBigWin']
+    const SoundManager = Object.fromEntries(['playClick', 'playBetSelect', 'startSpin', 'stopSpin', 'playWin', 'playBigWin',
+        'iniciarMusicaAmbiente']
         .map(name => [name, () => sounds.push(name)]));
     const context = vm.createContext({
         document, URL, URLSearchParams, Date, Image: class {},
@@ -477,6 +478,13 @@ test('uma linha toca o ganho padrão; duas ou mais tocam o bônus maior; rodadas
         await vm.runInContext('playNormalSpin()', context);
         assert.deepEqual(sounds, ['startSpin', expected, 'playWin']);
     }
+});
+
+test('o primeiro toque ou tecla inicia a música ambiente', () => {
+    const { document, sounds } = loadGame();
+    document.listeners.pointerdown({ target: {} });
+    document.listeners.keydown({ target: {}, key: '1' });
+    assert.deepEqual(sounds, ['iniciarMusicaAmbiente', 'iniciarMusicaAmbiente']);
 });
 
 test('botões gerais tocam o clique; aposta e girar não', () => {

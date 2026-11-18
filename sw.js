@@ -1,6 +1,6 @@
 ﻿importScripts('./mascots-config.js');
 
-const CACHE_NAME = 'atleticas-v21';
+const CACHE_NAME = 'atleticas-v22';
 const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',
@@ -92,6 +92,9 @@ self.addEventListener('fetch', (event) => {
 
   // Ranking e sessões devem sempre consultar o servidor, sem cache de respostas.
   if (url.origin === location.origin && url.pathname.startsWith('/api/')) return;
+
+  // Música ambiente (~14 MB, respostas parciais 206): direto da rede, fora do cache offline.
+  if (url.origin === location.origin && url.pathname.endsWith('/assets/sounds/solta-carta-ambiente.mp3')) return;
 
   // Navegacao: rede primeiro (versao nova), cache como fallback offline.
   if (req.mode === 'navigate') {

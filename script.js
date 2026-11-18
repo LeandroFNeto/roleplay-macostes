@@ -262,6 +262,12 @@ document.addEventListener('click', (event) => {
     if (control && !control.closest('.bet-btn, #spin-btn')) SoundManager.playClick();
 });
 
+// Música ambiente: começa no primeiro toque/tecla (login, telefone/PIN, "Entrar e Jogar" ou já no jogo).
+// Os listeners ficam ativos para retomar a música se o navegador recusou ou suspendeu o áudio.
+const startAmbientMusic = () => SoundManager.iniciarMusicaAmbiente();
+document.addEventListener('pointerdown', startAmbientMusic, true);
+document.addEventListener('keydown', startAmbientMusic, true);
+
 // RESOLUÇÃO DE SETOR / MASCOTE VIA URL
 function initSector() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -872,7 +878,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v21') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v22') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'

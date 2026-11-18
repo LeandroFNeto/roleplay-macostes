@@ -92,6 +92,13 @@ test('a indicação de offline pronto depende da integridade do cache e as APIs 
     assert.equal(await harness.request('/api/login'), undefined);
 });
 
+test('a música ambiente vai direto à rede e fica fora do pré-cache', async () => {
+    const harness = workerHarness();
+    const assets = Array.from(vm.runInContext('ASSETS_TO_CACHE', harness.context));
+    assert.ok(!assets.some(path => path.endsWith('solta-carta-ambiente.mp3')));
+    assert.equal(await harness.request('/assets/sounds/solta-carta-ambiente.mp3'), undefined);
+});
+
 test('atualizar o jogo preserva caches de outras aplicações e fontes externas são opcionais offline', async () => {
     const harness = workerHarness();
     await harness.caches.open('outro-aplicativo');
