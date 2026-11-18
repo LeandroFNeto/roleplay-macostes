@@ -562,16 +562,20 @@ async function playNormalSpin() {
     lockControls(false);
 }
 
-// SESSÃO DE BÔNUS
-async function runBonusSession(initialMulti, titleText, multiText, titleColor, prize = 0) {
+// Mostra a tela de WIN por 2,5s (também usada pelo painel de teste dev-win-test.js).
+async function showWinOverlay(titleText, multiText, prize = 0) {
     dom.overlayTitle.innerText = titleText;
     dom.overlayPrize.innerText = prize.toLocaleString();
-    dom.overlayMascot.src = currentSector.image || '';
+    const tierImage = { 'SUPER WIN': currentSector.superWinImage, 'MEGA WIN': currentSector.megaWinImage, 'SUPER MEGA WIN': currentSector.superMegaWinImage }[titleText];
+    dom.overlayMascot.src = tierImage || currentSector.image || '';
     dom.overlayMultiText.innerText = multiText;
-    
     dom.overlay.classList.remove('hidden');
     await delay(2500);
     dom.overlay.classList.add('hidden');
+}
+// SESSÃO DE BÔNUS
+async function runBonusSession(initialMulti, titleText, multiText, titleColor, prize = 0) {
+    await showWinOverlay(titleText, multiText, prize);
 
     multiplier = initialMulti;
     updateUI();
@@ -853,7 +857,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v13') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v18') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'

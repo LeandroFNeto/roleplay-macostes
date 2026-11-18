@@ -1,4 +1,4 @@
-// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos com Símbolos Oficiais Segmentados
+﻿// Catálogo modular de mascotes das Atléticas da UENP e Centros Acadêmicos com Símbolos Oficiais Segmentados
 const MASCOTS_CATALOG = {
     'computacao': {
         id: 'computacao',
@@ -7,6 +7,9 @@ const MASCOTS_CATALOG = {
         mascotName: 'Javali Ja-Vali',
         icon: '🐗',
         image: 'assets/animations/javali_buff.png',
+        megaWinImage: 'assets/animations/javali_win.png',
+        superMegaWinImage: 'assets/animations/javali_supermega.png',
+        superWinImage: 'assets/animations/javali_superwin.png',
         throwImage: 'assets/animations/javali_throw.png',
         symbols: ['🐗', '💻', '⚡', '⌨️', '🚀'],
         symbolImages: [

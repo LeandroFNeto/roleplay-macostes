@@ -1,6 +1,6 @@
-importScripts('./mascots-config.js');
+﻿importScripts('./mascots-config.js');
 
-const CACHE_NAME = 'atleticas-v13';
+const CACHE_NAME = 'atleticas-v18';
 const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',
@@ -39,7 +39,7 @@ const ASSETS_TO_CACHE = [...new Set([
   './assets/animations/ferradura_relic.png',
   // Inclui todos os fundos, símbolos e animações, mesmo dos jogos ainda não visitados.
   ...Object.values(MASCOTS_CATALOG).flatMap(sector => [
-    sector.image, sector.throwImage, sector.relicImage, sector.bgImage,
+    sector.image, sector.superWinImage, sector.megaWinImage, sector.superMegaWinImage, sector.throwImage, sector.relicImage, sector.bgImage,
     ...(sector.symbolImages || [])
   ]).filter(Boolean).map(path => './' + path)
 ])];
