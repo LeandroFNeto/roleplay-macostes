@@ -1,6 +1,6 @@
-﻿importScripts('./mascots-config.js');
+importScripts('./mascots-config.js');
 
-const CACHE_NAME = 'atleticas-v12';
+const CACHE_NAME = 'atleticas-v13';
 const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',
@@ -118,6 +118,20 @@ self.addEventListener('fetch', (event) => {
       } catch {
         // A fonte local padrão permite jogar mesmo sem fontes externas.
         return new Response('', { status: 200 });
+      }
+    })());
+    return;
+  }
+  // Codigo (js/css/json): rede primeiro, para atualizacoes chegarem logo; cache so offline.
+  if (url.origin === location.origin && /\.(js|css|json)$/.test(url.pathname)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const response = await fetch(req);
+        if (response.ok) event.waitUntil(cache.put(req, response.clone()));
+        return response;
+      } catch {
+        return (await cache.match(req)) || Response.error();
       }
     })());
     return;
