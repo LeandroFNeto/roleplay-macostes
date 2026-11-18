@@ -2,7 +2,7 @@
   "name": "macostes-bets",
   "private": true,
   "scripts": {
-    "test": "node --test test-competition-model.mjs test-competition-api.mjs test-competition-redis.mjs test-game-flows.js test-offline-cache.js test-local.js test-responsive.js",
+    "test": "node --test test-competition-model.mjs test-competition-api.mjs test-competition-redis.mjs test-game-flows.js test-sound-manager.js test-offline-cache.js test-local.js test-responsive.js",
     "test:redis": "node --test test-competition-redis.mjs"
   },
   "dependencies": { "@upstash/redis": "^1.34.0" }

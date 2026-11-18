@@ -1,6 +1,6 @@
 ﻿importScripts('./mascots-config.js');
 
-const CACHE_NAME = 'atleticas-v18';
+const CACHE_NAME = 'atleticas-v21';
 const ASSETS_TO_CACHE = [...new Set([
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [...new Set([
   './app-mode.js',
   './auth-store.js',
   './ranking-service.js',
+  './sound-manager.js',
   './mascots-config.js',
   './tailwind.cdn.js',
   './manifest.json',
@@ -37,6 +38,11 @@ const ASSETS_TO_CACHE = [...new Set([
   './assets/animations/urso_throw.png',
   './assets/animations/xicara_relic.png',
   './assets/animations/ferradura_relic.png',
+  './assets/sounds/clique-interface.wav',
+  './assets/sounds/escolha-valor.wav',
+  './assets/sounds/momento-roleta-2.wav',
+  './assets/sounds/bonus-win-padrao.wav',
+  './assets/sounds/bonus-win-2.wav',
   // Inclui todos os fundos, símbolos e animações, mesmo dos jogos ainda não visitados.
   ...Object.values(MASCOTS_CATALOG).flatMap(sector => [
     sector.image, sector.superWinImage, sector.megaWinImage, sector.superMegaWinImage, sector.throwImage, sector.relicImage, sector.bgImage,

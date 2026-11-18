@@ -28,6 +28,7 @@ function loadService(localStorage, fetch, online = true, href = 'https://game.te
 
 function loadGame(search = '', origin = 'https://game.test', realServices = false, sharedStorage = storage(), instantTimers = false) {
     const elements = new Map();
+    const betButtons = [];
     function element() {
         return {
             children: [], dataset: {}, style: {}, className: '', textContent: '', innerText: '', events: {},
@@ -47,9 +48,14 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
             return elements.get(id);
         },
         createElement(tagName) { return { ...element(), tagName }; },
-        querySelectorAll() { return []; }, addEventListener() {}, title: ''
+        querySelectorAll(selector) { return selector === '.bet-btn' ? betButtons : []; }, title: '',
+        listeners: {}, addEventListener(type, callback) { this.listeners[type] = callback; }
     };
+    for (const bet of [50, 100]) betButtons.push({ ...element(), dataset: { bet: String(bet) } });
     const timers = [];
+    const sounds = [];
+    const SoundManager = Object.fromEntries(['playClick', 'playBetSelect', 'startSpin', 'stopSpin', 'playWin', 'playBigWin']
+        .map(name => [name, () => sounds.push(name)]));
     const context = vm.createContext({
         document, URL, URLSearchParams, Date, Image: class {},
         AbortController, setTimeout: instantTimers ? callback => { callback(); return 1; } : setTimeout, clearTimeout,
@@ -57,7 +63,7 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
         localStorage: sharedStorage,
         fetch() { throw new Error('O teste não deve acessar o servidor'); },
         AuthStore: { getCurrentUser() { return null; }, saveUser() {}, shouldShowGuidance() { return false; } },
-        RankingService: { startPeriodicSync() {}, prizeWinner: null },
+        RankingService: { startPeriodicSync() {}, prizeWinner: null }, SoundManager,
         setInterval(callback) { timers.push(callback); }
     });
     loadAppMode(context);
@@ -67,7 +73,7 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
     }
     vm.runInContext(fs.readFileSync('mascots-config.js', 'utf8'), context);
     vm.runInContext(fs.readFileSync('script.js', 'utf8'), context);
-    return { context, elements, timers };
+    return { context, elements, timers, sounds, document, betButtons };
 }
 
 test('os cinco mascotes abrem por links próprios e aceitam os parâmetros legados', () => {
@@ -422,4 +428,68 @@ test('um giro mantém relíquia automática, pontuação bonificada e dez rodada
     assert.equal(vm.runInContext('isSpinning', context), false);
     assert.ok(elements.get('relic-img').src);
     assert.equal(fs.readFileSync('index.html', 'utf8').includes('test-card-btn'), false);
+});
+
+test('escolher a aposta toca escolha-valor, exceto durante um giro', () => {
+    const { context, sounds, betButtons } = loadGame();
+    betButtons[1].events.click();
+    assert.equal(vm.runInContext('currentBet', context), 100);
+    assert.deepEqual(sounds, ['playBetSelect']);
+    vm.runInContext('isSpinning = true;', context);
+    betButtons[0].events.click();
+    assert.equal(vm.runInContext('currentBet', context), 100);
+    assert.deepEqual(sounds, ['playBetSelect']);
+});
+
+test('a roleta toca do clique em girar até o fim da animação e não toca em giro recusado', async () => {
+    const { context, sounds } = loadGame('', 'https://game.test', false, storage(), true);
+    await vm.runInContext('playNormalSpin()', context);
+    vm.runInContext("currentUser = { id: 'A', nickname: 'Ana', token: 'test' }; balance = 0;", context);
+    await vm.runInContext('playNormalSpin()', context);
+    assert.deepEqual(sounds, []);
+
+    vm.runInContext(`
+        balance = 5000;
+        Math.random = () => 0.99;
+        document.querySelectorAll = selector => selector === '.grid-cell' ? Array.from({ length: 9 }, () => document.createElement('div')) : [];
+        let intervalCleared = false;
+        setInterval = callback => { Promise.resolve().then(() => { while (!intervalCleared) callback(); }); return 1; };
+        clearInterval = () => { intervalCleared = true; };
+        getWinningLines = () => [];
+    `, context);
+    await vm.runInContext('playNormalSpin()', context);
+    assert.deepEqual(sounds, ['startSpin', 'startSpin', 'stopSpin']);
+});
+
+test('uma linha toca o ganho padrão; duas ou mais tocam o bônus maior; rodadas auto tocam o padrão', async () => {
+    for (const [lines, expected] of [[1, 'playWin'], [2, 'playBigWin'], [4, 'playBigWin']]) {
+        const { context, sounds } = loadGame('', 'https://game.test', false, storage(), true);
+        vm.runInContext(`
+            currentUser = { id: 'A', nickname: 'Ana', token: 'test' };
+            Math.random = () => 0.99;
+            globalThis.spinCount = 0;
+            animateSpin = async () => { globalThis.spinCount++; };
+            getWinningLines = () => globalThis.spinCount === 1 ? Array.from({ length: ${lines} }, () => [0, 1, 2])
+                : globalThis.spinCount === 3 ? [[3, 4, 5]] : [];
+            highlightWins = () => {};
+            RankingService.submitScore = () => {};
+        `, context);
+        await vm.runInContext('playNormalSpin()', context);
+        assert.deepEqual(sounds, ['startSpin', expected, 'playWin']);
+    }
+});
+
+test('botões gerais tocam o clique; aposta e girar não', () => {
+    const { document, sounds } = loadGame();
+    const target = matches => ({ closest(selector) {
+        return selector.split(',').some(part => matches.includes(part.trim())) ? this : null;
+    } });
+    document.listeners.click({ target: target(['button']), preventDefault() {} });
+    document.listeners.click({ target: target(['.menu-item']), preventDefault() {} });
+    document.listeners.click({ target: target(['a[data-game-link]']), preventDefault() {} });
+    assert.deepEqual(sounds, ['playClick', 'playClick', 'playClick']);
+    document.listeners.click({ target: target(['button', '.bet-btn']), preventDefault() {} });
+    document.listeners.click({ target: target(['button', '#spin-btn']), preventDefault() {} });
+    document.listeners.click({ target: target([]), preventDefault() {} });
+    assert.equal(sounds.length, 3);
 });

@@ -255,8 +255,11 @@ function renderPayoutNotice() {
 }
 
 // Evita sair do jogo antes de terminar um giro ou a sequência de bônus.
+// Também toca o clique dos botões gerais (aposta e girar têm sons próprios).
 document.addEventListener('click', (event) => {
     if (isSpinning && event.target.closest('a[data-game-link]')) event.preventDefault();
+    const control = event.target.closest('button, .menu-item, a[data-game-link]');
+    if (control && !control.closest('.bet-btn, #spin-btn')) SoundManager.playClick();
 });
 
 // RESOLUÇÃO DE SETOR / MASCOTE VIA URL
@@ -322,6 +325,7 @@ function updateBetUI() {
 dom.betBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         if (isSpinning) return;
+        SoundManager.playBetSelect();
         currentBet = parseInt(btn.dataset.bet);
         updateBetUI();
         showMessage(`Aposta definida: ${currentBet} pts.`);
@@ -426,7 +430,12 @@ async function triggerMascotBuff() {
 }
 
 // ANIMAÇÃO DOS ROLOS COM SÍMBOLOS DO SETOR ATIVO (IMAGENS SEGMENTADAS OU EMOJIS)
-async function animateSpin(hasBuff = false) {
+// Duração dos giros: o normal é mais longo para o som da roleta aparecer; as 10 rodadas auto são mais curtas.
+const SPIN_DURATION_MS = 2200;
+const AUTO_SPIN_DURATION_MS = 1400;
+const SPIN_TICK_MS = 50;
+
+async function animateSpin(hasBuff = false, durationMs = SPIN_DURATION_MS) {
     const cells = document.querySelectorAll('.grid-cell');
     const symbols = (currentSector && currentSector.symbolImages && currentSector.symbolImages.length > 0)
         ? currentSector.symbolImages
@@ -436,6 +445,7 @@ async function animateSpin(hasBuff = false) {
         c.classList.remove('win-cell');
         c.classList.add('spin-anim');
     });
+    SoundManager.startSpin();
 
     return new Promise(resolve => {
         let spinCount = 0;
@@ -446,7 +456,7 @@ async function animateSpin(hasBuff = false) {
             }
             spinCount++;
             
-            if (spinCount > 15) {
+            if (spinCount >= Math.round(durationMs / SPIN_TICK_MS)) {
                 clearInterval(spinInterval);
                 cells.forEach(c => c.classList.remove('spin-anim'));
                 
@@ -467,9 +477,10 @@ async function animateSpin(hasBuff = false) {
                     renderCell(cells[i], gridState[i]);
                 }
                 
+                SoundManager.stopSpin();
                 resolve();
             }
-        }, 50);
+        }, SPIN_TICK_MS);
     });
 }
 
@@ -509,6 +520,7 @@ async function playNormalSpin() {
     }
 
     lockControls(true);
+    SoundManager.startSpin();
     balance -= currentBet;
     activeMascotMultiplier = 1;
     updateUI();
@@ -527,6 +539,8 @@ async function playNormalSpin() {
     if (winningLines.length > 0) {
         highlightWins(winningLines);
         const linesCount = winningLines.length;
+        if (linesCount >= 2) SoundManager.playBigWin();
+        else SoundManager.playWin();
         
         const sectorMult = getSectorCurrentBonus(currentSector);
         const cardMult = activeMascotMultiplier > 1 ? activeMascotMultiplier : 1;
@@ -588,11 +602,12 @@ async function runBonusSession(initialMulti, titleText, multiText, titleColor, p
         dom.spinBtn.innerText = `🎰 RODADA AUTO ${11 - i}/10`;
         showMessage(`Rodada Bônus ${11 - i} de 10`, "bg-purple-900/50", "text-purple-300");
         
-        await animateSpin();
+        await animateSpin(false, AUTO_SPIN_DURATION_MS);
         const winningLines = getWinningLines();
         
         if (winningLines.length > 0) {
             highlightWins(winningLines);
+            SoundManager.playWin();
             if (multiplier < maxMultiplier) multiplier++;
             
             const prize = currentBet * multiplier * winningLines.length;
@@ -857,7 +872,7 @@ async function initOfflineCache() {
     const serviceWorker = navigator.serviceWorker;
     let cacheReady = false;
     serviceWorker.addEventListener('message', event => {
-        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v18') return;
+        if (event.data?.type !== 'OFFLINE_CACHE_STATUS' || event.data.version !== 'atleticas-v21') return;
         cacheReady = event.data.ready;
         label.textContent = cacheReady
             ? '✓ Todos os mascotes estão disponíveis offline neste aparelho.'
