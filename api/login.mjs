@@ -5,6 +5,7 @@ import { GUIDANCE_KEY } from './_competition-store.mjs';
 const hashPin = (pin, salt) => scryptSync(pin, salt, 32).toString('hex');
 const MAX_FAILS = 5;
 const LOCK_S = 900;
+const MAX_IP_TRIES = 30;
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -17,19 +18,25 @@ export default async function handler(req, res) {
     if (!/^\d{10,11}$/.test(phone)) return res.status(400).json({ error: 'Telefone invalido (DDD + numero)' });
     if (!/^\d{4,6}$/.test(pin)) return res.status(400).json({ error: 'PIN deve ter 4 a 6 numeros' });
 
-    const failKey = `fails:${phone}`;
-    if ((Number(await redis.get(failKey)) || 0) >= MAX_FAILS) {
-      return res.status(429).json({ error: 'Muitas tentativas. Tente em 15 minutos.' });
-    }
+    // Limite por IP: barra varredura de PINs em varios telefones e trava de contas alheias.
+    const ip = String(req.headers?.['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const ipKey = `ipfails:${ip}`;
+    const ipTries = await redis.incr(ipKey);
+    if (ipTries === 1) await redis.expire(ipKey, LOCK_S);
+    if (ipTries > MAX_IP_TRIES) return res.status(429).json({ error: 'Muitas tentativas. Tente em 15 minutos.' });
 
+    if (await redis.sismember('blacklist:phones', phone)) return res.status(403).json({ error: 'Conta bloqueada' });
+
+    const failKey = `fails:${phone}`;
     let user = await redis.hget('users', phone);
     if (user) {
+      // Conta a tentativa ANTES de verificar o PIN: incr e atomico, entao requisicoes
+      // paralelas nao burlam o limite (o antigo get-depois-incr deixava).
+      const tries = await redis.incr(failKey);
+      if (tries === 1) await redis.expire(failKey, LOCK_S);
+      if (tries > MAX_FAILS) return res.status(429).json({ error: 'Muitas tentativas. Tente em 15 minutos.' });
       const ok = timingSafeEqual(Buffer.from(hashPin(pin, user.salt), 'hex'), Buffer.from(user.hash, 'hex'));
-      if (!ok) {
-        await redis.incr(failKey);
-        await redis.expire(failKey, LOCK_S);
-        return res.status(401).json({ error: 'PIN incorreto' });
-      }
+      if (!ok) return res.status(401).json({ error: 'PIN incorreto' });
       await redis.del(failKey);
     } else {
       const nickname = clean(b.nickname, 20);

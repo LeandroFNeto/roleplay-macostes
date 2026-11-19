@@ -53,6 +53,7 @@ test('API exige sessão e inteiros seguros sem truncar, converter strings ou lim
         general: { nickname: 'Ana', score: args[3] }, eligible: null, accepted: true });
     },
     async hgetall() { return {}; },
+    async hget() { return null; }, async sismember() { return 0; },
   };
   const api = handlers(db);
   assert.equal((await api.request('POST', 1000000000)).statusCode, 401);
@@ -60,7 +61,7 @@ test('API exige sessão e inteiros seguros sem truncar, converter strings ou lim
     assert.equal((await api.request('POST', score, '43999990000')).statusCode, 400);
   }
   assert.equal(calls.length, 0);
-  for (const score of [1000000, 1000000000, 1250000000, Number.MAX_SAFE_INTEGER]) {
+  for (const score of [1000, 50000, 1000000]) {
     const res = await api.request('POST', score, '43999990000', 'Ana');
     assert.equal(res.statusCode, 200);
     assert.equal(res.data.confirmedScore, score);
@@ -73,8 +74,14 @@ test('API exige sessão e inteiros seguros sem truncar, converter strings ou lim
     assert.equal(call.args[2], 'Ana');
     assert.equal(call.args[3], String(score));
   }
-  assert.equal(calls.length, 4, 'Um único EVAL por atualização de recorde e prêmio');
+  assert.equal(calls.length, 3, 'Um único EVAL por atualização de recorde e prêmio');
   assert.equal((await api.request('DELETE')).statusCode, 405);
+});
+
+test('trava rejeita pontuacao implausivel (edicao pelo DevTools)', async () => {
+  const db = { async eval() { throw new Error('nao deve chamar'); }, async hgetall() { return {}; }, async hget() { return null; }, async sismember() { return 0; } };
+  const api = handlers(db);
+  assert.equal((await api.request('POST', 1000000000, '43999990000')).statusCode, 400);
 });
 
 test('encerramento exige segredo da organização e não é acessível pela sessão do jogador', async () => {
@@ -99,7 +106,8 @@ test('API pública usa allowlist para ranking, vencedor e competição', async (
     score: '1250000000', achievedAt: 2, lastSeen: Date.now(), sector: 'Computação', icon: '🐗' };
   const state = { ...model.createCompetition(1), status: 'closed', reason: 'target',
     winner: privateRecord, leader: privateRecord, closedAt: 2 };
-  const api = handlers({ async eval() { return { state }; }, async hgetall() { return { '43999990000': privateRecord }; } });
+  const api = handlers({ async eval() { return { state }; }, async hgetall() { return { '43999990000': privateRecord }; },
+    async hmget() { return { '43999990000': { createdAt: 0 } }; }, async smembers() { return []; } });
   const response = await api.request('GET');
   assert.equal(response.statusCode, 200);
   assert.equal(response.headers['Cache-Control'], 'no-store');
@@ -122,6 +130,7 @@ test('login persiste orientações por conta no servidor e não força aviso par
   const hashes = new Map();
   const db = {
     async get() { return null; }, async set() {}, async del() {},
+    async incr() { return 1; }, async expire() {}, async sismember() { return 0; },
     async hget(key, field) { return hashes.get(key)?.[field] ?? null; },
     async hsetnx(key, field, value) {
       const hash = hashes.get(key) || {};
@@ -141,4 +150,34 @@ test('login persiste orientações por conta no servidor e não força aviso par
   assert.equal((await login('43988880000')).data.guidanceRequired, true);
   delete hashes.get('users')['43988880000'].guidanceVersion;
   assert.equal((await login('43988880000')).data.guidanceRequired, false);
+});
+
+
+test('login bloqueia PIN apos 5 tentativas mesmo em paralelo (contagem atomica)', async () => {
+  let n = 0;
+  const user = { nickname: 'A', salt: 'aa', hash: '00'.repeat(32) };
+  const db = { async sismember() { return 0; }, async incr(k) { return k.startsWith('fails:') ? ++n : 1; }, async expire() {}, async del() {},
+    async hget() { return user; } };
+  const { context } = handlers(db);
+  const source = fs.readFileSync('api/login.mjs', 'utf8').replace(/^import .*\r?\n/gm, '')
+    .replace('export default async function handler', 'async function loginHandler');
+  vm.runInContext(source + '\nthis.loginHandler = loginHandler;', context);
+  const codes = await Promise.all(Array.from({ length: 8 }, () =>
+    invoke(context.loginHandler, { method: 'POST', body: { phone: '43999990000', pin: '9999' } }).then(r => r.statusCode)));
+  assert.equal(codes.filter(c => c === 401).length, 5);
+  assert.equal(codes.filter(c => c === 429).length, 3);
+});
+
+test('ranking remove conta inexistente e manda fraudador para a lista negra', async () => {
+  const rec = (score) => ({ nickname: 'x', score: String(score), updatedAt: 10_000, lastSeen: Date.now() });
+  const hashes = { 'ranking:players': { ok: rec(100), ghost: rec(100), cheat: rec(900000000) }, 'competition:v2:records': { cheat: 1, ghost: 1 } };
+  const banned = [];
+  const db = { async eval() { return { state: model.createCompetition(1) }; },
+    async hgetall() { return { ...hashes['ranking:players'] }; },
+    async hmget() { return { ok: { createdAt: 0 }, cheat: { createdAt: 0 } }; }, async smembers() { return []; },
+    async sadd(k, ...p) { banned.push(...p); }, async hdel(k, ...p) { p.forEach(f => delete hashes[k][f]); } };
+  const res = await handlers(db).request('GET');
+  assert.deepEqual(res.data.players.map(p => p.nickname), ['x']);
+  assert.deepEqual(banned, ['cheat']);
+  assert.deepEqual(Object.keys(hashes['ranking:players']), ['ok']);
 });

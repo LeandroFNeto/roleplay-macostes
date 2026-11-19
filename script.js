@@ -938,7 +938,32 @@ initGrid();
 updateBetUI();
 initBonusRotation();
 showInitialGuidance();
-dom.spinBtn.addEventListener('click', playNormalSpin);
+// Trava anti auto-clicker (client-side, dissuasiva): ignora cliques sinteticos e cliques com ritmo robotico.
+// shortcut: so detecta cadencia regular; o limite real de pontuacao esta em api/ranking.mjs.
+const spinClicks = [];
+let spinBlockedUntil = 0;
+dom.spinBtn.addEventListener('click', (event) => {
+    if (!event.isTrusted) return;
+    const now = Date.now();
+    if (now < spinBlockedUntil) {
+        showMessage("Auto-clicker detectado. Aguarde alguns segundos.", "bg-red-900", "text-red-200");
+        return;
+    }
+    spinClicks.push(now);
+    if (spinClicks.length > 8) spinClicks.shift();
+    if (spinClicks.length === 8) {
+        const gaps = spinClicks.slice(1).map((t, i) => t - spinClicks[i]);
+        const mean = gaps.reduce((a, b) => a + b) / gaps.length;
+        const dev = Math.sqrt(gaps.reduce((a, g) => a + (g - mean) ** 2, 0) / gaps.length);
+        if (dev < 15 && mean < 3000) {
+            spinBlockedUntil = now + 30000;
+            spinClicks.length = 0;
+            showMessage("Auto-clicker detectado. Giro bloqueado por 30s.", "bg-red-900", "text-red-200");
+            return;
+        }
+    }
+    playNormalSpin();
+});
 
 // Sincronização periódica do Ranking (a cada 30 segundos)
 RankingService.onUnauthorized = () => dom.logoutBtn.click(); // sessão expirada
