@@ -4,6 +4,7 @@ let currentSector = null;
 let balance = 5000;
 let multiplier = 1;
 let maxMultiplier = 10;
+const ALLOWED_BETS = Object.freeze([50, 100, 200, 500]);
 let currentBet = 50; 
 let isSpinning = false;
 let activeMascotMultiplier = 1;
@@ -341,7 +342,9 @@ dom.betBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         if (isSpinning) return;
         SoundManager.playBetSelect();
-        currentBet = parseInt(btn.dataset.bet);
+        const bet = parseInt(btn.dataset.bet);
+        if (!ALLOWED_BETS.includes(bet)) return; // ignora valor adulterado no inspetor
+        currentBet = bet;
         updateBetUI();
         showMessage(`Aposta definida: ${currentBet} pts.`);
     });
