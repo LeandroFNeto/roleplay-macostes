@@ -1,4 +1,4 @@
-﻿// ESTADO DO JOGO
+// ESTADO DO JOGO
 let currentUser = null;
 let currentSector = null;
 let balance = 5000;
@@ -96,6 +96,13 @@ dom.demoLoginBtn.addEventListener('click', () => {
     showMessage('Teste local pronto! Escolha sua aposta.', 'bg-emerald-900', 'text-emerald-200');
 });
 
+document.getElementById('login-create-btn').addEventListener('click', e => {
+    if (!dom.loginInput.hidden) return;
+    e.preventDefault(); // 1º toque só mostra o apelido
+    dom.loginInput.hidden = false;
+    dom.loginInput.focus();
+});
+
 dom.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = document.getElementById('login-error');
@@ -103,10 +110,12 @@ dom.loginForm.addEventListener('submit', async (e) => {
     const { user, error } = await AuthStore.login(
         document.getElementById('login-phone').value,
         document.getElementById('login-pin').value,
-        dom.loginInput.value
+        // botão LOGIN: só entra em conta existente, nunca cria uma nova
+        e.submitter?.id === 'login-existing-btn' ? '' : dom.loginInput.value
     );
     if (error) {
-        errEl.innerText = error;
+        errEl.innerText = e.submitter?.id === 'login-existing-btn' && error.startsWith('Primeiro acesso')
+            ? 'Conta não encontrada. Toque em "CRIAR CONTA" para se cadastrar.' : error;
         errEl.classList.remove('hidden');
         return;
     }

@@ -29,11 +29,14 @@
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
                 <input type="password" id="login-pin" inputmode="numeric" placeholder="PIN (4 a 6 números)" required minlength="4" maxlength="6" pattern="\d{4,6}" autocomplete="current-password"
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <input type="text" id="login-input" placeholder="Apelido (só no 1º acesso)" maxlength="20"
+                <input type="text" id="login-input" hidden placeholder="Escolha seu apelido" maxlength="20"
                     class="bg-[#240407] text-yellow-200 placeholder-yellow-600/60 border-2 border-amber-800 rounded-xl px-4 py-3 text-center font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400">
                 <p id="login-error" class="text-red-400 text-xs font-bold hidden"></p>
-                <button type="submit" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-[0_4px_0_#78350f] border border-yellow-200 transition-all">
-                    ENTRAR E JOGAR
+                <button type="submit" id="login-create-btn" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-500 hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-[0_4px_0_#78350f] border border-yellow-200 transition-all">
+                    CRIAR CONTA
+                </button>
+                <button type="submit" id="login-existing-btn" class="text-yellow-200 hover:bg-amber-900/40 font-bold py-3 rounded-xl border-2 border-amber-700 transition-all">
+                    🔑 LOGIN (já tenho conta)
                 </button>
             </form>
         </div>
