@@ -6,6 +6,7 @@ let multiplier = 1;
 let maxMultiplier = 10;
 const ALLOWED_BETS = Object.freeze([50, 100, 200, 500]);
 let currentBet = 50; 
+let allIn = false;
 let isSpinning = false;
 let activeMascotMultiplier = 1;
 let gridState = new Array(9).fill('❓'); 
@@ -329,8 +330,8 @@ function initGrid() {
 // ATUALIZA UI DE APOSTA
 function updateBetUI() {
     dom.betBtns.forEach(btn => {
-        const betVal = parseInt(btn.dataset.bet);
-        if (betVal === currentBet) {
+        const isActive = btn.dataset.bet === 'all' ? allIn : !allIn && parseInt(btn.dataset.bet) === currentBet;
+        if (isActive) {
             btn.classList.add('active-bet');
         } else {
             btn.classList.remove('active-bet');
@@ -342,8 +343,15 @@ dom.betBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         if (isSpinning) return;
         SoundManager.playBetSelect();
+        if (btn.dataset.bet === 'all') {
+            allIn = true;
+            updateBetUI();
+            showMessage(`🍀 Hoje estou com sorte! Aposta: tudo (${balance} pts).`);
+            return;
+        }
         const bet = parseInt(btn.dataset.bet);
         if (!ALLOWED_BETS.includes(bet)) return; // ignora valor adulterado no inspetor
+        allIn = false;
         currentBet = bet;
         updateBetUI();
         showMessage(`Aposta definida: ${currentBet} pts.`);
@@ -389,6 +397,11 @@ function lockControls(lock) {
         dom.spinBtn.classList.add('opacity-50', 'pointer-events-none');
         dom.betBtns.forEach(b => b.classList.add('opacity-50', 'pointer-events-none'));
     } else {
+        if (currentUser && balance < Math.min(...ALLOWED_BETS)) { // faliu: ganha 2000 de saldo
+            balance += 2000;
+            updateUI();
+            showMessage('💸 Você faliu! Ganhou +2.000 pts de saldo.', 'bg-emerald-900', 'text-emerald-200');
+        }
         dom.spinBtn.classList.remove('opacity-50', 'pointer-events-none');
         dom.betBtns.forEach(b => b.classList.remove('opacity-50', 'pointer-events-none'));
         dom.spinBtn.innerText = "🎰 GIRAR";
@@ -532,7 +545,8 @@ async function playNormalSpin() {
         dom.loginModal.classList.remove('hidden');
         return;
     }
-    if (balance < currentBet) {
+    if (allIn) currentBet = Math.floor(balance); // aposta tudo = saldo atual
+    if (balance < currentBet || currentBet < 1) {
         showMessage("Saldo insuficiente! Tente outra conta ou recarregue.", "bg-red-900", "text-red-200");
         return;
     }
