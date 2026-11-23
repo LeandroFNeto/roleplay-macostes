@@ -7,11 +7,16 @@ function loadSoundManager(withAudio = true, playResult = () => Promise.resolve()
     const created = [];
     const listeners = {};
     const contexts = [];
+    const timers = [];
+    let nextTimer = 1;
     class FakeAudio {
         constructor(src) {
-            Object.assign(this, { src, paused: true, muted: false, loop: false, currentTime: 0, calls: [] });
+            Object.assign(this, { src, paused: true, muted: false, loop: false, currentTime: 0, duration: NaN, calls: [], handlers: {} });
             created.push(this);
         }
+        addEventListener(type, fn) { (this.handlers[type] ||= []).push(fn); }
+        removeEventListener(type, fn) { this.handlers[type] = (this.handlers[type] || []).filter(h => h !== fn); }
+        emit(type) { for (const fn of [...(this.handlers[type] || [])]) fn(); }
         play() { this.calls.push('play'); this.paused = false; return playResult(); }
         pause() { this.calls.push('pause'); this.paused = true; }
     }
@@ -31,26 +36,36 @@ function loadSoundManager(withAudio = true, playResult = () => Promise.resolve()
     };
     const context = vm.createContext({
         document,
+        setTimeout(fn, ms) { const id = nextTimer++; timers.push({ id, fn, ms }); return id; },
+        clearTimeout(id) { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); },
         navigator: { userAgent: options.userAgent || 'Mozilla/5.0 (Windows NT 10.0) Chrome/130', platform: 'Win32', maxTouchPoints: 0 },
         ...(withAudio ? { Audio: FakeAudio } : {}),
-        ...(options.audioContext ? { AudioContext: FakeAudioContext } : {})
+        ...(options.audioContext ? { AudioContext: FakeAudioContext } : {}),
+        ...(options.fetch ? { fetch: options.fetch, URL: { createObjectURL: blob => 'blob:' + blob.name } } : {})
     });
     vm.runInContext(fs.readFileSync('sound-manager.js', 'utf8') + '\nthis.SoundManager = SoundManager;', context);
     const bySrc = name => created.find(audio => audio.src.endsWith(name));
     const ambient = () => bySrc('solta-carta-ambiente.mp3');
-    return { manager: context.SoundManager, created, listeners, bySrc, ambient, contexts, document };
+    return { manager: context.SoundManager, created, listeners, bySrc, ambient, contexts, document, timers };
 }
 
-test('sem a API de áudio o gerenciador vira no-op sem lançar erro', () => {
+test('sem a API de áudio o gerenciador vira no-op sem lançar erro', async () => {
     const { manager, listeners } = loadSoundManager(false);
     for (const fn of ['playClick', 'playBetSelect', 'startSpin', 'stopSpin', 'playWin', 'playBigWin',
         'iniciarMusicaAmbiente', 'reduzirVolumeAmbiente', 'restaurarVolumeAmbiente']) manager[fn]();
     assert.equal(listeners.pointerdown, undefined);
+    const { manager: semAudio, timers } = loadSoundManager(false);
+    let terminou = 0;
+    const fim = semAudio.tocarResultadoApostaTudo(true, () => terminou++);
+    assert.equal(timers.length, 1);
+    timers[0].fn();
+    await fim;
+    assert.equal(terminou, 1);
 });
 
 test('cada função toca o arquivo certo e só a roleta e a música ficam em loop', () => {
     const { manager, created, bySrc } = loadSoundManager();
-    assert.equal(created.length, 6);
+    assert.equal(created.length, 8);
     for (const [fn, file] of [['playClick', 'clique-interface.wav'], ['playBetSelect', 'escolha-valor.wav'],
         ['playWin', 'bonus-win-padrao.wav'], ['playBigWin', 'bonus-win-2.wav']]) {
         bySrc(file).currentTime = 3;
@@ -203,4 +218,93 @@ test('voltar ao primeiro plano sem a música ter começado não a inicia', () =>
     document.visibilityState = 'visible';
     listeners.visibilitychange.callback();
     assert.deepEqual(ambient().calls, []);
+});
+
+test('vitória no aposta tudo toca do segundo 5 ao 10 e só então encerra a janela', async () => {
+    const { manager, bySrc, timers } = loadSoundManager();
+    const audio = bySrc('vaiganhar-vaiperder.mp3');
+    bySrc('bonus-win-padrao.wav').paused = false;
+    let terminou = 0;
+    const fim = manager.tocarResultadoApostaTudo(true, () => terminou++);
+    assert.equal(audio.currentTime, 5);
+    assert.deepEqual(audio.calls, ['play']);
+    assert.equal(bySrc('bonus-win-padrao.wav').paused, true, 'sons anteriores são interrompidos');
+    assert.equal(timers.length, 1);
+    assert.equal(timers[0].ms, 5000 + 1500, 'timer de segurança: trecho + folga');
+    audio.emit('playing');
+    assert.equal(timers.length, 1);
+    assert.equal(timers[0].ms, 5000, 'tocando: corta exatamente no segundo 10');
+    audio.currentTime = 9.8;
+    audio.emit('timeupdate');
+    assert.equal(terminou, 0);
+    audio.currentTime = 10.05;
+    audio.emit('timeupdate');
+    await fim;
+    assert.equal(terminou, 1);
+    assert.equal(audio.paused, true);
+    assert.equal(timers.length, 0);
+    audio.emit('ended');
+    assert.equal(terminou, 1, 'encerra uma única vez');
+});
+
+test('derrota no aposta tudo toca xiiii do início e encerra no fim do arquivo', async () => {
+    const { manager, bySrc, timers } = loadSoundManager();
+    const audio = bySrc('xiiii.mp3');
+    audio.currentTime = 2;
+    audio.duration = 3.2;
+    let terminou = 0;
+    const fim = manager.tocarResultadoApostaTudo(false, () => terminou++);
+    assert.equal(audio.currentTime, 0);
+    assert.deepEqual(audio.calls, ['play']);
+    assert.equal(timers[0].ms, 3200 + 1500);
+    audio.emit('ended');
+    await fim;
+    assert.equal(terminou, 1);
+    assert.equal(timers.length, 0);
+});
+
+test('autoplay bloqueado mantém a janela pelo tempo do trecho e depois fecha', async () => {
+    const { manager, timers } = loadSoundManager(true, () => Promise.reject(new Error('NotAllowedError')));
+    let terminou = 0;
+    const fim = manager.tocarResultadoApostaTudo(true, () => terminou++);
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(timers.length, 1);
+    assert.equal(timers[0].ms, 5000);
+    timers[0].fn();
+    await fim;
+    assert.equal(terminou, 1);
+});
+
+test('derrota sem duração conhecida e sem evento ended fecha pelo timer de segurança', async () => {
+    const { manager, timers } = loadSoundManager();
+    let terminou = 0;
+    const fim = manager.tocarResultadoApostaTudo(false, () => terminou++);
+    assert.equal(timers[0].ms, 6000 + 1500);
+    timers[0].fn();
+    await fim;
+    assert.equal(terminou, 1);
+});
+
+test('um novo resultado encerra o anterior sem sobrepor os áudios', async () => {
+    const { manager, bySrc } = loadSoundManager();
+    let primeiro = 0;
+    const fim = manager.tocarResultadoApostaTudo(true, () => primeiro++);
+    manager.tocarResultadoApostaTudo(false);
+    await fim;
+    assert.equal(primeiro, 1);
+    assert.equal(bySrc('vaiganhar-vaiperder.mp3').paused, true);
+    assert.equal(bySrc('xiiii.mp3').paused, false);
+});
+
+test('o som de vitória do aposta tudo é carregado como blob para o seek ao segundo 5 funcionar', async () => {
+    const pedidos = [];
+    const fetch = async url => { pedidos.push(url); return { ok: true, blob: async () => ({ name: url }) }; };
+    const { bySrc, created } = loadSoundManager(true, undefined, { fetch });
+    const audio = bySrc('vaiganhar-vaiperder.mp3');
+    audio.load = () => audio.calls.push('load');
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    assert.deepEqual(pedidos, ['assets/sounds/vaiganhar-vaiperder.mp3']);
+    assert.equal(audio.src, 'blob:assets/sounds/vaiganhar-vaiperder.mp3');
+    assert.deepEqual(audio.calls, ['load']);
+    assert.equal(created.filter(a => a.src.startsWith('blob:')).length, 1);
 });

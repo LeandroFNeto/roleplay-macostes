@@ -29,6 +29,9 @@ const dom = {
     overlayMultiText: document.getElementById('overlay-multi-text'),
     overlayPrize: document.getElementById('overlay-prize'),
     overlayMascot: document.getElementById('overlay-mascot'),
+    loseOverlay: document.getElementById('allin-lose-overlay'),
+    loseOverlayMascot: document.getElementById('lose-overlay-mascot'),
+    loseOverlayAmount: document.getElementById('lose-overlay-amount'),
     mascotImg: document.getElementById('sector-mascot-img'),
     mascotName: document.getElementById('sector-mascot-name'),
     sectorBadge: document.getElementById('sector-badge'),
@@ -545,7 +548,8 @@ async function playNormalSpin() {
         dom.loginModal.classList.remove('hidden');
         return;
     }
-    if (allIn) currentBet = Math.floor(balance); // aposta tudo = saldo atual
+    const isAllInSpin = allIn; // fixa o modo da rodada: o resultado usa os sons e janelas do "aposta tudo"
+    if (isAllInSpin) currentBet = Math.floor(balance); // aposta tudo = saldo atual
     if (balance < currentBet || currentBet < 1) {
         showMessage("Saldo insuficiente! Tente outra conta ou recarregue.", "bg-red-900", "text-red-200");
         return;
@@ -571,8 +575,11 @@ async function playNormalSpin() {
     if (winningLines.length > 0) {
         highlightWins(winningLines);
         const linesCount = winningLines.length;
-        if (linesCount >= 2) SoundManager.playBigWin();
-        else SoundManager.playWin();
+        // No "aposta tudo" o som da vitória toca junto com a janela de WIN (ver runBonusSession).
+        if (!isAllInSpin) {
+            if (linesCount >= 2) SoundManager.playBigWin();
+            else SoundManager.playWin();
+        }
         
         const sectorMult = getSectorCurrentBonus(currentSector);
         const cardMult = activeMascotMultiplier > 1 ? activeMascotMultiplier : 1;
@@ -598,9 +605,14 @@ async function playNormalSpin() {
         }
 
         showMessage(`+${prize} PTS! Bônus de ${currentSector.sectorName} ativado!`, "bg-green-900", "text-green-300");
-        await delay(1500); 
-        
-        await runBonusSession(initialMulti, titleText, multiText, titleColor, prize);
+        // A janela de WIN do "aposta tudo" abre na hora e fica aberta enquanto o trecho de 5s toca.
+        const holdOverlay = isAllInSpin ? () => SoundManager.tocarResultadoApostaTudo(true) : null;
+        if (!isAllInSpin) await delay(1500);
+
+        await runBonusSession(initialMulti, titleText, multiText, titleColor, prize, holdOverlay);
+    } else if (isAllInSpin) {
+        showMessage("Xiiii... a sorte não veio desta vez.", "bg-red-900", "text-red-200");
+        await showAllInLoseOverlay(currentBet);
     } else {
         showMessage("Quase! O mascote está torcendo por você.", "bg-slate-800", "text-slate-300");
     }
@@ -609,19 +621,29 @@ async function playNormalSpin() {
 }
 
 // Mostra a tela de WIN por 2,5s (também usada pelo painel de teste dev-win-test.js).
-async function showWinOverlay(titleText, multiText, prize = 0) {
+// hold (opcional): função que devolve uma Promise; a janela fica aberta até ela terminar.
+async function showWinOverlay(titleText, multiText, prize = 0, hold = null) {
     dom.overlayTitle.innerText = titleText;
     dom.overlayPrize.innerText = prize.toLocaleString();
     const tierImage = { 'SUPER WIN': currentSector.superWinImage, 'MEGA WIN': currentSector.megaWinImage, 'SUPER MEGA WIN': currentSector.superMegaWinImage }[titleText];
     dom.overlayMascot.src = tierImage || currentSector.image || '';
     dom.overlayMultiText.innerText = multiText;
     dom.overlay.classList.remove('hidden');
-    await delay(2500);
+    await (hold ? hold() : delay(2500));
     dom.overlay.classList.add('hidden');
 }
+
+// Janela de perda do "aposta tudo": fica aberta enquanto o xiiii.mp3 toca.
+async function showAllInLoseOverlay(lostAmount) {
+    dom.loseOverlayAmount.innerText = `-${lostAmount.toLocaleString()}`;
+    dom.loseOverlayMascot.src = currentSector.image || '';
+    dom.loseOverlay.classList.remove('hidden');
+    await SoundManager.tocarResultadoApostaTudo(false);
+    dom.loseOverlay.classList.add('hidden');
+}
 // SESSÃO DE BÔNUS
-async function runBonusSession(initialMulti, titleText, multiText, titleColor, prize = 0) {
-    await showWinOverlay(titleText, multiText, prize);
+async function runBonusSession(initialMulti, titleText, multiText, titleColor, prize = 0, holdOverlay = null) {
+    await showWinOverlay(titleText, multiText, prize, holdOverlay);
 
     multiplier = initialMulti;
     updateUI();

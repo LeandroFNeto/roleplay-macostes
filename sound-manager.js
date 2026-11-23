@@ -5,7 +5,9 @@ const SoundManager = (() => {
         bet: 'assets/sounds/escolha-valor.wav',
         spin: 'assets/sounds/momento-roleta-2.wav',
         win: 'assets/sounds/bonus-win-padrao.wav',
-        bigWin: 'assets/sounds/bonus-win-2.wav'
+        bigWin: 'assets/sounds/bonus-win-2.wav',
+        allInWin: 'assets/sounds/vaiganhar-vaiperder.mp3',
+        allInLose: 'assets/sounds/xiiii.mp3'
     };
     // Ponto de início de cada som, em segundos (padrão: 0).
     const START_AT = {};
@@ -37,11 +39,29 @@ const SoundManager = (() => {
             } catch { /* navegador sem suporte: segue sem som */ }
         }
         if (sounds.spin) sounds.spin.loop = true;
+        loadAsBlob('allInWin');
         try {
             ambient = new Audio(AMBIENT_SRC);
             ambient.loop = true;
             ambient.preload = 'none'; // ~14 MB: só baixa quando a música começa
         } catch { ambient = null; }
+    }
+
+    // Servidores sem Range (python http.server) e o cache do service worker entregam o arquivo
+    // inteiro de uma vez: o navegador o marca como não pulável e ignora currentTime = 5.
+    // Carregado como blob, o áudio fica todo na memória e o seek funciona em qualquer origem.
+    function loadAsBlob(key) {
+        const audio = sounds[key];
+        if (!audio || typeof fetch !== 'function' || typeof URL === 'undefined'
+            || typeof URL.createObjectURL !== 'function') return;
+        fetch(FILES[key])
+            .then(response => (response.ok ? response.blob() : null))
+            .then(blob => {
+                if (!blob || !audio.paused) return; // não troca a fonte no meio de uma reprodução
+                audio.src = URL.createObjectURL(blob);
+                audio.load();
+            })
+            .catch(() => { /* segue com o arquivo original */ });
     }
 
     function play(key, restart = true) {
@@ -54,6 +74,112 @@ const SoundManager = (() => {
             const result = audio.play();
             if (result && typeof result.catch === 'function') result.catch(() => {});
         } catch { /* reprodução bloqueada ou arquivo indisponível */ }
+    }
+
+    function stopSound(key) {
+        const audio = sounds[key];
+        if (!audio) return;
+        requested.delete(audio);
+        if (audio.paused) return;
+        try { audio.pause(); } catch { /* ignora */ }
+    }
+
+    // Resultado do "Hoje estou com sorte! (Aposta Tudo)".
+    // Vitória: trecho de 5s a 10s de vaiganhar-vaiperder.mp3. Derrota: xiiii.mp3 inteiro.
+    // onTerminar (e a Promise devolvida) é chamado uma única vez, quando o trecho acaba —
+    // ou pelo timer de segurança, se o áudio for bloqueado, não carregar ou não disparar 'ended'.
+    const ALL_IN_WIN_START = 5;
+    const ALL_IN_WIN_END = 10;
+    const ALL_IN_LOSE_FALLBACK_MS = 6000; // usado enquanto a duração do arquivo é desconhecida
+    const RESULT_ERROR_MS = 1500;          // tempo mínimo de janela quando o arquivo falha
+    const RESULT_MARGIN_MS = 1500;         // folga do timer de segurança sobre a duração esperada
+    let finishCurrentResult = null;
+
+    function tocarResultadoApostaTudo(venceu, onTerminar) {
+        if (finishCurrentResult) finishCurrentResult(); // encerra um resultado anterior ainda tocando
+        stopSound('spin');
+        for (const key of ['win', 'bigWin', 'allInWin', 'allInLose']) stopSound(key);
+
+        return new Promise(resolve => {
+            const audio = sounds[venceu ? 'allInWin' : 'allInLose'];
+            const start = venceu ? ALL_IN_WIN_START : 0;
+            const end = venceu ? ALL_IN_WIN_END : Infinity;
+            const listeners = [];
+            let timer = null;
+            let finished = false;
+
+            const knownDuration = () => (audio && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null);
+            // Quanto ainda falta tocar, em ms, a partir da posição atual do áudio.
+            const remainingMs = () => {
+                if (venceu) {
+                    const stop = Math.min(end, knownDuration() || end);
+                    const pos = audio && audio.currentTime >= start ? audio.currentTime : start;
+                    return Math.max(0, (stop - pos) * 1000);
+                }
+                const duration = knownDuration();
+                if (!duration) return ALL_IN_LOSE_FALLBACK_MS;
+                return Math.max(0, (duration - ((audio && audio.currentTime) || 0)) * 1000);
+            };
+            const arm = ms => {
+                clearTimeout(timer);
+                timer = setTimeout(finish, ms);
+            };
+            const on = (type, fn) => {
+                if (!audio || typeof audio.addEventListener !== 'function') return;
+                audio.addEventListener(type, fn);
+                listeners.push([type, fn]);
+            };
+            const seekToStart = () => {
+                try { audio.currentTime = start; } catch { /* metadados ainda não carregados */ }
+            };
+
+            function finish() {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                if (audio) {
+                    for (const [type, fn] of listeners) {
+                        try { audio.removeEventListener(type, fn); } catch { /* ignora */ }
+                    }
+                    requested.delete(audio);
+                    try { audio.pause(); } catch { /* ignora */ }
+                }
+                if (finishCurrentResult === finish) finishCurrentResult = null;
+                try { if (typeof onTerminar === 'function') onTerminar(); } catch { /* ignora */ }
+                resolve();
+            }
+            finishCurrentResult = finish;
+
+            if (audio) seekToStart();
+            // Timer de segurança: a janela nunca fica presa, mesmo sem nenhum evento do áudio.
+            arm(remainingMs() + RESULT_MARGIN_MS);
+            if (!audio) return;
+
+            on('loadedmetadata', () => {
+                if (audio.currentTime < start - 0.25) seekToStart(); // o seek inicial pode ter sido ignorado
+            });
+            on('playing', () => {
+                if (audio.currentTime < start - 0.25) seekToStart();
+                arm(remainingMs() + (venceu ? 0 : RESULT_MARGIN_MS)); // vitória: o timer é o corte exato em 10s
+            });
+            on('timeupdate', () => {
+                if (audio.currentTime >= end) finish();
+            });
+            on('ended', finish);
+            on('error', () => arm(RESULT_ERROR_MS));
+
+            requested.add(audio);
+            try {
+                audio.muted = false;
+                const result = audio.play();
+                if (result && typeof result.catch === 'function') {
+                    // Autoplay bloqueado: mantém a janela pelo tempo nominal do trecho, sem som.
+                    result.catch(() => { if (!finished) arm(remainingMs()); });
+                }
+            } catch {
+                arm(remainingMs());
+            }
+        });
     }
 
     // iOS/Safari só deixa tocar fora de um gesto elementos já tocados durante um gesto.
@@ -197,6 +323,7 @@ const SoundManager = (() => {
             } catch { /* ignora */ }
         },
         playWin() { play('win'); },
-        playBigWin() { play('bigWin'); }
+        playBigWin() { play('bigWin'); },
+        tocarResultadoApostaTudo
     };
 })();

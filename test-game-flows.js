@@ -57,6 +57,7 @@ function loadGame(search = '', origin = 'https://game.test', realServices = fals
     const SoundManager = Object.fromEntries(['playClick', 'playBetSelect', 'startSpin', 'stopSpin', 'playWin', 'playBigWin',
         'iniciarMusicaAmbiente']
         .map(name => [name, () => sounds.push(name)]));
+    SoundManager.tocarResultadoApostaTudo = async venceu => { sounds.push(venceu ? 'apostaTudoVenceu' : 'apostaTudoPerdeu'); };
     const context = vm.createContext({
         document, URL, URLSearchParams, Date, Image: class {},
         AbortController, setTimeout: instantTimers ? callback => { callback(); return 1; } : setTimeout, clearTimeout,
@@ -460,6 +461,36 @@ test('a roleta toca do clique em girar até o fim da animação e não toca em g
     `, context);
     await vm.runInContext('playNormalSpin()', context);
     assert.deepEqual(sounds, ['startSpin', 'startSpin', 'stopSpin']);
+});
+
+test('aposta tudo: vitória e derrota tocam o som próprio com a janela correspondente aberta', async () => {
+    for (const [lines, expected, overlayId] of [[1, 'apostaTudoVenceu', 'bonus-overlay'], [0, 'apostaTudoPerdeu', 'allin-lose-overlay']]) {
+        const { context, sounds, elements } = loadGame('', 'https://game.test', false, storage(), true);
+        const overlay = elements.get(overlayId);
+        const classes = [];
+        overlay.classList = { add: c => classes.push('+' + c), remove: c => classes.push('-' + c), contains() { return true; } };
+        let abertaDuranteSom = null;
+        context.SoundManager.tocarResultadoApostaTudo = async venceu => {
+            abertaDuranteSom = classes.at(-1) === '-hidden';
+            sounds.push(venceu ? 'apostaTudoVenceu' : 'apostaTudoPerdeu');
+        };
+        vm.runInContext(`
+            currentUser = { id: 'A', nickname: 'Ana', token: 'test' };
+            allIn = true;
+            balance = 1000;
+            Math.random = () => 0.99;
+            globalThis.spinCount = 0;
+            animateSpin = async () => { globalThis.spinCount++; };
+            getWinningLines = () => globalThis.spinCount === 1 ? Array.from({ length: ${lines} }, () => [0, 1, 2]) : [];
+            highlightWins = () => {};
+            RankingService.submitScore = () => {};
+        `, context);
+        await vm.runInContext('playNormalSpin()', context);
+        assert.deepEqual(sounds.slice(0, 2), ['startSpin', expected], 'sem som genérico de vitória junto do resultado');
+        assert.equal(sounds.includes('playBigWin'), false);
+        assert.equal(abertaDuranteSom, true, 'a janela está aberta enquanto o som toca');
+        assert.equal(classes.at(-1), '+hidden', 'a janela fecha quando o som termina');
+    }
 });
 
 test('uma linha toca o ganho padrão; duas ou mais tocam o bônus maior; rodadas auto tocam o padrão', async () => {

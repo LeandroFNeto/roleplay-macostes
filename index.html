@@ -98,6 +98,15 @@
             <p id="overlay-multi-text" class="win-ribbon">Multiplicador 2x!</p>
         </div>
     </div>
+    <!-- Perda no "Hoje estou com sorte (aposta tudo)": aberta enquanto o som xiiii toca -->
+    <div id="allin-lose-overlay" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm" role="alert">
+        <div class="win-card lose-card overlay-enter">
+            <img id="lose-overlay-mascot" alt="" class="win-mascot">
+            <h1 class="win-title">Xiiii...</h1>
+            <p id="lose-overlay-amount" class="win-prize">-0</p>
+            <p class="win-ribbon">Hoje não foi dia de sorte!</p>
+        </div>
+    </div>
     <!-- INFORMAÇÕES: consulta manual e apresentação única para contas novas -->
     <dialog id="info-panel" aria-labelledby="info-title" class="info-panel ornamental-modal-card">
         <header class="info-panel-header">
